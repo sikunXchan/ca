@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "AI Cooking",
   description: "Smart recipe generator from your receipts",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 };
 
 export const viewport: Viewport = {
