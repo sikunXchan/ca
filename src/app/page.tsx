@@ -1,66 +1,113 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Trash2, Plus, Loader2 } from "lucide-react";
+import styles from "./Home.module.css";
+
+type Ingredient = {
+  id: number;
+  name: string;
+};
 
 export default function Home() {
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [newName, setNewName] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+
+  useEffect(() => {
+    fetchIngredients();
+  }, []);
+
+  const fetchIngredients = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/inventory");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setIngredients(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newName.trim()) return;
+    
+    setAdding(true);
+    try {
+      const res = await fetch("/api/inventory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newName.trim() }),
+      });
+      const data = await res.json();
+      if (data && data.id) {
+        setIngredients([data, ...ingredients]);
+        setNewName("");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("エラーが発生しました");
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await fetch(`/api/inventory/${id}`, { method: "DELETE" });
+      setIngredients(ingredients.filter(i => i.id !== id));
+    } catch (e) {
+      console.error(e);
+      alert("エラーが発生しました");
+    }
+  };
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className={styles.container}>
+      <h1 className={styles.title}>冷蔵庫の在庫</h1>
+      
+      <form onSubmit={handleAdd} className={styles.addForm}>
+        <input 
+          type="text" 
+          placeholder="新しい食材を追加 (例: トマト)" 
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          disabled={adding}
         />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+        <button type="submit" disabled={adding || !newName.trim()}>
+          {adding ? <Loader2 className="spinner" size={20} /> : <Plus size={20} />}
+          追加
+        </button>
+      </form>
+
+      {loading ? (
+        <div className="flex justify-center mt-4">
+          <Loader2 className="spinner" size={32} />
         </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      ) : ingredients.length === 0 ? (
+        <p className="text-center text-muted mt-4">在庫がありません。追加してください。</p>
+      ) : (
+        <ul className={styles.list}>
+          {ingredients.map((item) => (
+            <li key={item.id} className={styles.listItem}>
+              <span>{item.name}</span>
+              <button 
+                className={styles.deleteBtn}
+                onClick={() => handleDelete(item.id)}
+                aria-label="削除"
+              >
+                <Trash2 size={18} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

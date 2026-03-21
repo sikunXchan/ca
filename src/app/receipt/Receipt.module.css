@@ -1,0 +1,92 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.uploadBox {
+  display: flex;
+  border: 2px dashed var(--border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  background: var(--card-bg);
+  min-height: 250px;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.2s;
+}
+
+.uploadBox:hover {
+  border-color: var(--primary);
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+}
+
+.previewImage {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: contain;
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 16px;
+  font-size: 18px;
+}
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 40px 0;
+  color: var(--primary);
+}
+
+.errorAlert {
+  background: rgba(250, 82, 82, 0.1);
+  color: #fa5252;
+  padding: 16px;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(250, 82, 82, 0.2);
+  text-align: center;
+}
+
+.successAlert {
+  background: rgba(81, 207, 102, 0.1);
+  color: #2b8a3e;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  border: 1px solid rgba(81, 207, 102, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.successAlert button {
+  background: #2b8a3e;
+}
+.successAlert button:hover {
+  background: #237032;
+}
