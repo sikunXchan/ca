@@ -70,7 +70,6 @@ export default function RecipePage() {
     
     setLoading(true);
     setErrorMsg("");
-    setRecipes([]);
     setExpandedIndex(0);
 
     try {
