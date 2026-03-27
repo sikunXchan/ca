@@ -82,8 +82,8 @@ export async function saveRecipe(recipe: {
       RETURNING *
     `;
     return rows[0];
-  } catch (error) {
-    console.error('Failed to save recipe:', error);
+  } catch (error: any) {
+    console.error('DB: Failed to save recipe. Error detail:', error.message, error.stack, JSON.stringify(recipe));
     return null;
   }
 }

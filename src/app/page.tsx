@@ -120,18 +120,17 @@ export default function Home() {
         </motion.div>
       ) : (
         <ul className={styles.list}>
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {ingredients.map((item) => (
               <motion.li
                 key={item.id}
                 className={styles.listItem}
-                layout
-                initial={{ opacity: 0, x: -30, scale: 0.95 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: 30, scale: 0.9 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, transition: { duration: 0.2 } }}
                 transition={{
                   type: "spring" as const,
-                  stiffness: 400,
+                  stiffness: 300,
                   damping: 30,
                 }}
               >

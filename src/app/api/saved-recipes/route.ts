@@ -20,8 +20,10 @@ export async function POST(req: Request) {
     }
 
     const recipe = await saveRecipe({ title, time, ingredients, steps, tips, image_url: image_url || null });
+    if (!recipe) throw new Error('DB Save returned null');
     return NextResponse.json(recipe);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to save' }, { status: 500 });
+  } catch (error: any) {
+    console.error('API: Failed to save recipe:', error);
+    return NextResponse.json({ error: 'Failed to save: ' + error.message }, { status: 500 });
   }
 }

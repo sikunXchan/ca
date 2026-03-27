@@ -30,8 +30,10 @@ export default function BottomNav() {
             {isActive && (
               <motion.div
                 className={styles.activeIndicator}
-                layoutId="activeTab"
-                transition={{ type: "spring" as const, stiffness: 400, damping: 30 }}
+                initial={{ opacity: 0, scaleX: 0 }}
+                animate={{ opacity: 1, scaleX: 1 }}
+                exit={{ opacity: 0, scaleX: 0 }}
+                transition={{ duration: 0.2 }}
               />
             )}
             <Icon size={24} />
