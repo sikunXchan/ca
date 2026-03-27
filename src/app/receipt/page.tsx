@@ -13,6 +13,7 @@ export default function ReceiptPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string>("");
   const [addedItems, setAddedItems] = useState<string[]>([]);
+  const [success, setSuccess] = useState(false);
   const router = useRouter();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,16 +23,8 @@ export default function ReceiptPage() {
       setPreview(URL.createObjectURL(selected));
       setErrorMsg("");
       setAddedItems([]);
+      setSuccess(false); // Reset success state on new file selection
     }
-  };
-
-  const fireSuccessConfetti = () => {
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#20b2aa', '#5fd4cd', '#ff7849', '#f97316', '#fbbf24'],
-    });
   };
 
   const processReceipt = async () => {
@@ -39,6 +32,7 @@ export default function ReceiptPage() {
     setLoading(true);
     setErrorMsg("");
     setAddedItems([]);
+    setSuccess(false);
 
     try {
       const formData = new FormData();
@@ -71,9 +65,7 @@ export default function ReceiptPage() {
       setAddedItems(data.ingredients);
       setFile(null);
       setPreview(null);
-      
-      // Fire confetti on success
-      setTimeout(() => fireSuccessConfetti(), 200);
+      setSuccess(true);
       
     } catch (e: any) {
       console.error(e);
@@ -91,68 +83,41 @@ export default function ReceiptPage() {
         レシートを撮影するか、画像をアップロードして在庫に自動追加します。
       </p>
 
-      <AnimatePresence>
-        {errorMsg && (
-          <motion.div
-            className={styles.errorAlert}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-          >
-            {errorMsg}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {errorMsg && (
+        <div className={styles.errorAlert}>
+          {errorMsg}
+        </div>
+      )}
 
-      <AnimatePresence>
-        {addedItems.length > 0 && (
-          <motion.div
-            className={styles.successAlert}
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: "spring" as const, stiffness: 300, damping: 25 }}
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring" as const, stiffness: 500, damping: 20 }}
-              className={styles.successIcon}
+      {success && (
+        <div className={styles.successAlert}>
+          <div className={styles.successIcon}>
+            <CheckCircle size={40} />
+          </div>
+          <div>
+            <p style={{ fontWeight: 600 }}>以下の食材を追加しました：</p>
+            <ul className={styles.addedItemsList}>
+              {addedItems.map((item, i) => (
+                <li
+                  key={i}
+                  className={styles.addedItem}
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <button
+              onClick={() => router.push("/")}
             >
-              <CheckCircle size={40} />
-            </motion.div>
-            <div>
-              <p style={{ fontWeight: 600 }}>以下の食材を追加しました：</p>
-              <ul className={styles.addedItemsList}>
-                {addedItems.map((item, i) => (
-                  <motion.li
-                    key={i}
-                    className={styles.addedItem}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4 + i * 0.1, type: "spring" as const, stiffness: 400, damping: 20 }}
-                  >
-                    {item}
-                  </motion.li>
-                ))}
-              </ul>
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 + addedItems.length * 0.1 }}
-                onClick={() => router.push("/")}
-              >
-                在庫を確認する
-              </motion.button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              在庫を確認する
+            </button>
+          </div>
+        </div>
+      )}
 
-      {!loading && addedItems.length === 0 && (
-        <motion.label
+      {!loading && !success && (
+        <label
           className={styles.uploadBox}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}

@@ -26,7 +26,7 @@ export default function RecipePage() {
   const [loading, setLoading] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
-  const [expandedIndex, setExpandedIndex] = useState<number>(0);
+  const [expandedIndex, setExpandedIndex] = useState<number>(-1);
   const [savedSet, setSavedSet] = useState<Set<number>>(new Set());
   const [isTouch, setIsTouch] = useState(false);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
@@ -223,18 +223,13 @@ export default function RecipePage() {
         </button>
       </div>
 
-      <AnimatePresence>
-        {errorMsg && (
-          <motion.div
-            className={styles.errorAlert}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-          >
-            {errorMsg}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {errorMsg && (
+        <div
+          className={styles.errorAlert}
+        >
+          {errorMsg}
+        </div>
+      )}
 
       {loading && (
         <motion.div
@@ -264,110 +259,92 @@ export default function RecipePage() {
             <h2 className={styles.resultsTitle}>✨ 提案結果</h2>
           </div>
           
-          <AnimatePresence>
-            {recipes.map((recipe, index) => {
-              const isExpanded = expandedIndex === index;
-              const isSaved = savedSet.has(index);
-              return (
-                <motion.div
-                  key={index}
-                  className={styles.recipeCard}
-                  custom={index}
-                  variants={justGenerated ? cardVariants : undefined}
-                  initial={justGenerated ? "hidden" : undefined}
-                  animate={justGenerated ? "visible" : undefined}
-                  whileHover={isTouch ? undefined : {
-                    y: -4,
-                    rotateX: 2,
-                    rotateY: -1,
-                    transition: { duration: 0.3 }
-                  }}
-                  whileTap={isTouch ? { scale: 0.98 } : undefined}
-                  style={isTouch ? undefined : { transformStyle: "preserve-3d", perspective: "1000px" }}
-                >
-                  {recipe.image_url && (
-                    <img 
-                      src={recipe.image_url} 
-                      alt={recipe.title}
-                      className={styles.recipeImage}
-                    />
-                  )}
-                  
-                  <div className={styles.recipeHeader}>
-                    <div 
-                      className={styles.recipeTitleGroup}
-                      onClick={() => setExpandedIndex(isExpanded ? -1 : index)}
-                      style={{ cursor: "pointer", flex: 1 }}
-                    >
-                      <h2 className={styles.recipeTitle}>{recipe.title}</h2>
-                      <span className={styles.recipeTime}>⏱ {recipe.time}</span>
-                    </div>
-                    
-                    <div className={styles.recipeActions}>
-                      <motion.button
-                        className={isSaved ? styles.savedBtn : styles.saveBtn}
-                        onClick={() => handleSave(index)}
-                        disabled={isSaved || savingIndex === index}
-                        whileTap={!isSaved ? { scale: 0.9 } : undefined}
-                      >
-                        {savingIndex === index ? (
-                          <Loader2 className="spinner" size={14} />
-                        ) : isSaved ? (
-                          <Check size={14} />
-                        ) : (
-                          <Bookmark size={14} />
-                        )}
-                        {isSaved ? "保存済" : "保存"}
-                      </motion.button>
-                      
-                      <button
-                        className={styles.chevronBtn}
-                        onClick={() => setExpandedIndex(isExpanded ? -1 : index)}
-                      >
-                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                      </button>
-                    </div>
+          {recipes.map((recipe, index) => {
+            const isExpanded = expandedIndex === index;
+            const isSaved = savedSet.has(index);
+            return (
+              <div
+                key={index}
+                className={styles.recipeCard}
+              >
+                {recipe.image_url && (
+                  <img 
+                    src={recipe.image_url} 
+                    alt={recipe.title}
+                    className={styles.recipeImage}
+                  />
+                )}
+                
+                <div className={styles.recipeHeader}>
+                  <div 
+                    className={styles.recipeTitleGroup}
+                    onClick={() => setExpandedIndex(isExpanded ? -1 : index)}
+                    style={{ cursor: "pointer", flex: 1 }}
+                  >
+                    <h2 className={styles.recipeTitle}>{recipe.title}</h2>
+                    <span className={styles.recipeTime}>⏱ {recipe.time}</span>
                   </div>
                   
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div
-                        className={styles.recipeBody}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3 }}
-                        style={{ overflow: "hidden" }}
-                      >
-                        <div className={styles.section}>
-                          <h3>材料・調味料</h3>
-                          <ul className={styles.ingredientList}>
-                            {recipe.ingredients.map((item, i) => (
-                              <li key={i}>
-                                <span>{item.name}</span>
-                                <span className="text-muted">{item.amount}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div className={styles.section}>
-                          <h3>作り方</h3>
-                          <ol className={styles.stepList}>
-                            {recipe.steps.map((step, i) => (
-                              <li key={i}>{step}</li>
-                            ))}
-                          </ol>
-                        </div>
+                  <div className={styles.recipeActions}>
+                    <button
+                      className={isSaved ? styles.savedBtn : styles.saveBtn}
+                      onClick={() => handleSave(index)}
+                      disabled={isSaved || savingIndex === index}
+                    >
+                      {savingIndex === index ? (
+                        <Loader2 className="spinner" size={14} />
+                      ) : isSaved ? (
+                        <>
+                          <Check size={14} />
+                          <span>保存済み</span>
+                        </>
+                      ) : (
+                        <>
+                          <Bookmark size={14} />
+                          <span>保存</span>
+                        </>
+                      )}
+                    </button>
+                    
+                    <button
+                      className={styles.chevronBtn}
+                      onClick={() => setExpandedIndex(isExpanded ? -1 : index)}
+                    >
+                      {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                    </button>
+                  </div>
+                </div>
+                
+                {isExpanded && (
+                  <div
+                    className={styles.recipeBody}
+                  >
+                    <div className={styles.section}>
+                      <h3>材料・調味料</h3>
+                      <ul className={styles.ingredientList}>
+                        {recipe.ingredients.map((item, i) => (
+                          <li key={i}>
+                            <span>{item.name}</span>
+                            <span className="text-muted">{item.amount}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className={styles.section}>
+                      <h3>作り方</h3>
+                      <ol className={styles.stepList}>
+                        {recipe.steps.map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))}
+                      </ol>
+                    </div>
 
-                        {recipe.tips && (
-                          <div className={styles.tipsBox}>
-                            <strong>💡 ポイント: </strong> {recipe.tips}
-                          </div>
-                        )}
-                      </motion.div>
+                    {recipe.tips && (
+                      <div className={styles.tipsBox}>
+                        <strong>💡 ポイント: </strong> {recipe.tips}
+                      </div>
                     )}
-                  </AnimatePresence>
                 </motion.div>
               );
             })}

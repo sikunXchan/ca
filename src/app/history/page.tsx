@@ -104,40 +104,18 @@ export default function HistoryPage() {
     <div className={styles.container}>
       <h1 className={styles.title}>📚 レシピ履歴</h1>
 
-      <AnimatePresence>
-        {loading && (
-          <motion.div
-            key="loader"
-            className="flex justify-center mt-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <Loader2 className="spinner" size={32} color="var(--primary)" />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {loading && (
+        <div className="flex justify-center mt-4">
+          <Loader2 className="spinner" size={32} color="var(--primary)" />
+        </div>
+      )}
 
       {!loading && (
         <>
-          <AnimatePresence mode="popLayout">
-            {recipes.map((recipe, index) => {
-              const isExpanded = expandedId === recipe.id;
-              return (
-                <motion.div
-                  key={recipe.id}
-                  className={styles.recipeCard}
-                  layout
-                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.85, x: -40, transition: { duration: 0.2, ease: "easeIn" } }}
-                  transition={{
-                    delay: index * 0.06,
-                    type: "spring" as const,
-                    stiffness: 450,
-                    damping: 28,
-                  }}
-                >
+          {recipes.map((recipe, index) => {
+            const isExpanded = expandedId === recipe.id;
+            return (
+              <div key={recipe.id} className={styles.recipeCard}>
                 {recipe.image_url && (
                   <img
                     src={recipe.image_url}
@@ -145,7 +123,7 @@ export default function HistoryPage() {
                     className={styles.recipeImage}
                   />
                 )}
-                
+
                 <div className={styles.cardContent}>
                   <div className={styles.cardTopRow}>
                     <div style={{ flex: 1 }}>
@@ -164,11 +142,10 @@ export default function HistoryPage() {
                   </div>
 
                   <div className={styles.cardActions}>
-                    <motion.button
+                    <button
                       className={styles.recookBtn}
                       onClick={() => handleRecook(recipe.id)}
                       disabled={updatingId === recipe.id}
-                      whileTap={{ scale: 0.95 }}
                     >
                       {updatingId === recipe.id ? (
                         <Loader2 className="spinner" size={14} />
@@ -176,81 +153,61 @@ export default function HistoryPage() {
                         <RefreshCw size={14} />
                       )}
                       もう一度作った
-                    </motion.button>
-                    <motion.button
+                    </button>
+                    <button
                       className={styles.deleteBtn}
                       onClick={() => handleDelete(recipe.id)}
                       disabled={deletingId === recipe.id}
-                      whileTap={{ scale: 0.95 }}
                     >
                       {deletingId === recipe.id ? (
                         <Loader2 className="spinner" size={14} />
                       ) : (
                         <Trash2 size={14} />
                       )}
-                    </motion.button>
+                    </button>
                   </div>
                 </div>
 
-                <AnimatePresence>
-                  {isExpanded && (
-                    <motion.div
-                      className={styles.detailBody}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      style={{ overflow: "hidden" }}
-                    >
-                      <div className={styles.section}>
-                        <h3>材料・調味料</h3>
-                        <ul className={styles.ingredientList}>
-                          {(Array.isArray(recipe.ingredients) ? recipe.ingredients : []).map((item, i) => (
-                            <li key={i}>
-                              <span>{item.name}</span>
-                              <span className="text-muted">{item.amount}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                      
-                      <div className={styles.section}>
-                        <h3>作り方</h3>
-                        <ol className={styles.stepList}>
-                          {(Array.isArray(recipe.steps) ? recipe.steps : []).map((step, i) => (
-                            <li key={i}>{step}</li>
-                          ))}
-                        </ol>
-                      </div>
+                {isExpanded && (
+                  <div className={styles.detailBody}>
+                    <div className={styles.section}>
+                      <h3>材料・調味料</h3>
+                      <ul className={styles.ingredientList}>
+                        {(Array.isArray(recipe.ingredients) ? recipe.ingredients : []).map((item, i) => (
+                          <li key={i}>
+                            <span>{item.name}</span>
+                            <span className="text-muted">{item.amount}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
 
-                      {recipe.tips && (
-                        <div className={styles.tipsBox}>
-                          <strong>💡 ポイント: </strong> {recipe.tips}
-                        </div>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+                    <div className={styles.section}>
+                      <h3>作り方</h3>
+                      <ol className={styles.stepList}>
+                        {(Array.isArray(recipe.steps) ? recipe.steps : []).map((step, i) => (
+                          <li key={i}>{step}</li>
+                        ))}
+                      </ol>
+                    </div>
+
+                    {recipe.tips && (
+                      <div className={styles.tipsBox}>
+                        <strong>💡 ポイント: </strong> {recipe.tips}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             );
           })}
-          </AnimatePresence>
 
-          <AnimatePresence>
-            {recipes.length === 0 && (
-              <motion.div
-                key="empty"
-                className={styles.emptyState}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ type: "spring", stiffness: 400, damping: 28 }}
-              >
-                <BookOpen size={48} style={{ opacity: 0.5 }} />
-                <p>保存されたレシピはありません</p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {recipes.length === 0 && (
+            <div className={styles.emptyState}>
+              <BookOpen size={48} style={{ opacity: 0.5 }} />
+              <p>保存されたレシピはありません</p>
+            </div>
+          )}
         </>
       )}
     </div>
