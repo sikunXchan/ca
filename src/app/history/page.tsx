@@ -116,35 +116,37 @@ export default function HistoryPage() {
             const isExpanded = expandedId === recipe.id;
             return (
               <div key={recipe.id} className={styles.recipeCard}>
-                {recipe.image_url && (
-                  <img
-                    src={recipe.image_url}
-                    alt={recipe.title}
-                    className={styles.recipeImage}
-                  />
-                )}
-
-                <div className={styles.cardContent}>
-                  <div className={styles.cardTopRow}>
-                    <div style={{ flex: 1 }}>
-                      <h2 className={styles.recipeTitle}>{recipe.title}</h2>
-                      <span className={styles.recipeTime}>⏱ {recipe.time}</span>
-                      <div className={styles.savedDate}>
-                        📅 {formatDate(recipe.saved_at)}
-                      </div>
+                <div 
+                  className={styles.cardTopRow}
+                  onClick={() => setExpandedId(isExpanded ? null : recipe.id)}
+                >
+                  {recipe.image_url && (
+                    <img
+                      src={recipe.image_url}
+                      alt={recipe.title}
+                      className={styles.recipeIcon}
+                    />
+                  )}
+                  
+                  <div className={styles.titleInfo}>
+                    <h2 className={styles.recipeTitle}>{recipe.title}</h2>
+                    <span className={styles.recipeTime}>⏱ {recipe.time}</span>
+                    <div className={styles.savedDate}>
+                      📅 {formatDate(recipe.saved_at)}
                     </div>
-                    <button
-                      className={styles.expandBtn}
-                      onClick={() => setExpandedId(isExpanded ? null : recipe.id)}
-                    >
-                      {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                    </button>
                   </div>
+
+                  <button
+                    className={styles.expandBtn}
+                  >
+                    {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  </button>
+                </div>
 
                   <div className={styles.cardActions}>
                     <button
                       className={styles.recookBtn}
-                      onClick={() => handleRecook(recipe.id)}
+                      onClick={(e) => { e.stopPropagation(); handleRecook(recipe.id); }}
                       disabled={updatingId === recipe.id}
                     >
                       {updatingId === recipe.id ? (
@@ -156,7 +158,7 @@ export default function HistoryPage() {
                     </button>
                     <button
                       className={styles.deleteBtn}
-                      onClick={() => handleDelete(recipe.id)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(recipe.id); }}
                       disabled={deletingId === recipe.id}
                     >
                       {deletingId === recipe.id ? (
@@ -166,39 +168,38 @@ export default function HistoryPage() {
                       )}
                     </button>
                   </div>
-                </div>
 
-                {isExpanded && (
-                  <div className={styles.detailBody}>
-                    <div className={styles.section}>
-                      <h3>材料・調味料</h3>
-                      <ul className={styles.ingredientList}>
-                        {(Array.isArray(recipe.ingredients) ? recipe.ingredients : []).map((item, i) => (
-                          <li key={i}>
-                            <span>{item.name}</span>
-                            <span className="text-muted">{item.amount}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className={styles.section}>
-                      <h3>作り方</h3>
-                      <ol className={styles.stepList}>
-                        {(Array.isArray(recipe.steps) ? recipe.steps : []).map((step, i) => (
-                          <li key={i}>{step}</li>
-                        ))}
-                      </ol>
-                    </div>
-
-                    {recipe.tips && (
-                      <div className={styles.tipsBox}>
-                        <strong>💡 ポイント: </strong> {recipe.tips}
+                  {isExpanded && (
+                    <div className={styles.detailBody}>
+                      <div className={styles.section}>
+                        <h3>材料・調味料</h3>
+                        <ul className={styles.ingredientList}>
+                          {(Array.isArray(recipe.ingredients) ? recipe.ingredients : []).map((item, i) => (
+                            <li key={i}>
+                              <span>{item.name}</span>
+                              <span className="text-muted">{item.amount}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
+  
+                      <div className={styles.section}>
+                        <h3>作り方</h3>
+                        <ol className={styles.stepList}>
+                          {(Array.isArray(recipe.steps) ? recipe.steps : []).map((step, i) => (
+                            <li key={i}>{step}</li>
+                          ))}
+                        </ol>
+                      </div>
+  
+                      {recipe.tips && (
+                        <div className={styles.tipsBox}>
+                          <strong>💡 ポイント: </strong> {recipe.tips}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
             );
           })}
 

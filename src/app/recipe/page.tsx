@@ -105,7 +105,7 @@ export default function RecipePage() {
           ingredients: recipe.ingredients ?? [],
           steps: recipe.steps ?? [],
           tips: recipe.tips ?? '',
-          image_url: recipe.image_url?.startsWith('data:') ? null : (recipe.image_url || null),
+          image_url: recipe.image_url || null,
         }),
       });
       
@@ -176,20 +176,16 @@ export default function RecipePage() {
             const isSaved = savedSet.has(index);
             return (
               <div key={index} className={styles.recipeCard}>
-                {recipe.image_url && (
-                  <img 
-                    src={recipe.image_url} 
-                    alt={recipe.title}
-                    className={styles.recipeImage}
-                  />
-                )}
-                
-                <div className={styles.recipeHeader}>
-                  <div 
-                    className={styles.recipeTitleGroup}
-                    onClick={() => setExpandedIndex(isExpanded ? -1 : index)}
-                    style={{ cursor: "pointer", flex: 1 }}
-                  >
+                <div className={styles.recipeHeader} onClick={() => setExpandedIndex(isExpanded ? -1 : index)}>
+                  {recipe.image_url && (
+                    <img 
+                      src={recipe.image_url} 
+                      alt={recipe.title}
+                      className={styles.recipeIcon}
+                    />
+                  )}
+                  
+                  <div className={styles.recipeTitleGroup}>
                     <h2 className={styles.recipeTitle}>{recipe.title}</h2>
                     <span className={styles.recipeTime}>⏱ {recipe.time}</span>
                   </div>
@@ -197,7 +193,7 @@ export default function RecipePage() {
                   <div className={styles.recipeActions}>
                     <button
                       className={isSaved ? styles.savedBtn : styles.saveBtn}
-                      onClick={() => handleSave(index)}
+                      onClick={(e) => { e.stopPropagation(); handleSave(index); }}
                       disabled={isSaved || savingIndex === index}
                     >
                       {savingIndex === index ? (
@@ -217,7 +213,6 @@ export default function RecipePage() {
                     
                     <button
                       className={styles.chevronBtn}
-                      onClick={() => setExpandedIndex(isExpanded ? -1 : index)}
                     >
                       {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </button>

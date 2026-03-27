@@ -59,7 +59,7 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
         try {
           const imgResponse = await (ai as any).models.generateImages({
             model: 'models/imagen-4.0-generate-001',
-            prompt: `A beautiful, appetizing, professional food photography of ${recipe.title}. Japanese home cooking style. Top-down view on a wooden table. Warm natural lighting. High quality.`,
+            prompt: `A professional, close-up, appetizing food photography of ${recipe.title}. High-end restaurant style, centered, bright natural lighting, shallow depth of field, vibrant colors.`,
             config: {
               numberOfImages: 1,
             },
