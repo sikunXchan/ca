@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check } from "lucide-react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
-import confetti from "canvas-confetti";
 import styles from "./Recipe.module.css";
 
 type RecipeItem = {
@@ -17,124 +15,50 @@ type Recipe = {
   ingredients: RecipeItem[];
   steps: string[];
   tips: string;
-  image_url?: string;
+  image_url: string | null;
 };
 
 export default function RecipePage() {
   const [ingredients, setIngredients] = useState<string[]>([]);
-  const [instruction, setInstruction] = useState("");
   const [loading, setLoading] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [expandedIndex, setExpandedIndex] = useState<number>(-1);
   const [savedSet, setSavedSet] = useState<Set<number>>(new Set());
-  const [isTouch, setIsTouch] = useState(false);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
-  const [justGenerated, setJustGenerated] = useState(false);
 
   useEffect(() => {
-    setIsTouch(window.matchMedia("(hover: none)").matches);
+    fetchIngredients();
   }, []);
 
-  useEffect(() => {
+  const fetchIngredients = async () => {
     try {
-      const savedRecipes = localStorage.getItem("cooking_app_recipes");
-      if (savedRecipes) {
-        setRecipes(JSON.parse(savedRecipes));
-      }
-      const savedInstruction = localStorage.getItem("cooking_app_instruction");
-      if (savedInstruction) {
-        setInstruction(savedInstruction);
+      const res = await fetch("/api/inventory");
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setIngredients(data.map((i: any) => i.name));
       }
     } catch (e) {
-      console.error("Failed to load from cache", e);
+      console.error(e);
     }
-
-    fetch("/api/inventory")
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setIngredients(data.map((i: any) => i.name));
-        }
-      })
-      .catch(console.error);
-  }, []);
-
-  useEffect(() => {
-    if (recipes.length > 0) {
-      localStorage.setItem("cooking_app_recipes", JSON.stringify(recipes));
-    }
-  }, [recipes]);
-
-  const handleInstructionChange = (val: string) => {
-    setInstruction(val);
-    localStorage.setItem("cooking_app_instruction", val);
   };
 
-  const fireConfetti = useCallback(() => {
-    const duration = 2000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.7 },
-        colors: ['#ff7849', '#f97316', '#fb923c', '#20b2aa', '#f472b6'],
-      });
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.7 },
-        colors: ['#ff7849', '#f97316', '#fb923c', '#20b2aa', '#f472b6'],
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    };
-    frame();
-  }, []);
-
   const generateRecipes = async () => {
-    if (ingredients.length === 0) {
-      setErrorMsg("冷蔵庫の在庫がありません。追加してください。");
-      return;
-    }
-    
     setLoading(true);
     setErrorMsg("");
-    setExpandedIndex(0);
-    setSavedSet(new Set());
-    setJustGenerated(false);
-
+    setRecipes([]);
+    setExpandedIndex(-1);
+    
     try {
-      const res = await fetch("/api/recipes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients, instruction }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "レシピの生成に失敗しました");
-      }
-
+      const res = await fetch("/api/recipes", { method: "POST" });
       const data = await res.json();
-      if (data.recipes && Array.isArray(data.recipes)) {
-        setRecipes(data.recipes);
-        localStorage.setItem("cooking_app_recipes", JSON.stringify(data.recipes));
-        setJustGenerated(true);
-        // Fire confetti when recipes are generated
-        setTimeout(() => fireConfetti(), 300);
-      } else {
-        throw new Error("レシピデータの形式が正しくありません");
-      }
+      
+      if (!res.ok) throw new Error(data.error || "生成に失敗しました");
+      
+      setRecipes(data.recipes || []);
     } catch (e: any) {
       console.error(e);
-      setErrorMsg(e.message || "予期せぬエラーが発生しました");
+      setErrorMsg(e.message);
     } finally {
       setLoading(false);
     }
@@ -151,24 +75,16 @@ export default function RecipePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: recipe.title,
-          time: recipe.time,
-          ingredients: recipe.ingredients,
-          steps: recipe.steps,
-          tips: recipe.tips,
-          // base64 data URIs are too large for DB — skip them
+          time: recipe.time ?? '',
+          ingredients: recipe.ingredients ?? [],
+          steps: recipe.steps ?? [],
+          tips: recipe.tips ?? '',
           image_url: recipe.image_url?.startsWith('data:') ? null : (recipe.image_url || null),
         }),
       });
       
       if (res.ok) {
         setSavedSet(prev => new Set(prev).add(index));
-        // Mini confetti for save
-        confetti({
-          particleCount: 40,
-          spread: 60,
-          origin: { y: 0.8 },
-          colors: ['#20b2aa', '#5fd4cd', '#99f6e4'],
-        });
       } else {
         const errorData = await res.json();
         throw new Error(errorData.error || "保存に失敗しました");
@@ -181,21 +97,6 @@ export default function RecipePage() {
     }
   };
 
-  const cardVariants: Variants = {
-    hidden: { opacity: 0, y: 60, scale: 0.9 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        delay: i * 0.15,
-        type: "spring",
-        stiffness: 300,
-        damping: 24,
-      },
-    }),
-  };
-
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>🍳 AIレシピ提案</h1>
@@ -204,17 +105,8 @@ export default function RecipePage() {
         <p className="mb-2 text-sm text-muted">
           現在の在庫: {ingredients.length > 0 ? ingredients.join(", ") : "なし"}
         </p>
-        
-        <textarea
-          placeholder="カスタム指示 (任意) 例: ガッツリ系、消化の良いもの"
-          value={instruction}
-          onChange={(e) => handleInstructionChange(e.target.value)}
-          rows={3}
-          className={styles.textarea}
-        />
-        
         <button 
-          className={styles.submitBtn} 
+          className={styles.generateBtn}
           onClick={generateRecipes}
           disabled={loading || ingredients.length === 0}
         >
@@ -224,33 +116,18 @@ export default function RecipePage() {
       </div>
 
       {errorMsg && (
-        <div
-          className={styles.errorAlert}
-        >
+        <div className={styles.errorAlert}>
           {errorMsg}
         </div>
       )}
 
       {loading && (
-        <motion.div
-          className={styles.loadingState}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          >
-            <ChefHat size={48} />
-          </motion.div>
-          <motion.p
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            在庫から最適なレシピを考案中...
-          </motion.p>
-        </motion.div>
+        <div className={styles.loadingState}>
+          <div className="spinner-container">
+            <Loader2 className="spinner" size={48} />
+          </div>
+          <p>在庫から最適なレシピを考案中...</p>
+        </div>
       )}
 
       {!loading && recipes.length > 0 && (
@@ -263,10 +140,7 @@ export default function RecipePage() {
             const isExpanded = expandedIndex === index;
             const isSaved = savedSet.has(index);
             return (
-              <div
-                key={index}
-                className={styles.recipeCard}
-              >
+              <div key={index} className={styles.recipeCard}>
                 {recipe.image_url && (
                   <img 
                     src={recipe.image_url} 
@@ -316,9 +190,7 @@ export default function RecipePage() {
                 </div>
                 
                 {isExpanded && (
-                  <div
-                    className={styles.recipeBody}
-                  >
+                  <div className={styles.recipeBody}>
                     <div className={styles.section}>
                       <h3>材料・調味料</h3>
                       <ul className={styles.ingredientList}>
@@ -345,10 +217,11 @@ export default function RecipePage() {
                         <strong>💡 ポイント: </strong> {recipe.tips}
                       </div>
                     )}
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
