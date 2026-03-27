@@ -38,11 +38,6 @@ export default function RecipePage() {
       if (saved) {
         setRecipes(JSON.parse(saved));
       }
-      
-      const savedInstruction = localStorage.getItem("cooking_app_instruction");
-      if (savedInstruction) {
-        setInstruction(savedInstruction);
-      }
     } catch (e) {
       console.error("Failed to load from localStorage", e);
     }
@@ -80,7 +75,6 @@ export default function RecipePage() {
       
       // Save to localStorage
       localStorage.setItem("cooking_app_last_recipes", JSON.stringify(newRecipes));
-      localStorage.setItem("cooking_app_instruction", instruction);
       
       setSavedSet(new Set()); // Reset saved highlights for new results
 
@@ -97,6 +91,30 @@ export default function RecipePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getRecipeIcon = (recipe: Recipe) => {
+    const text = (recipe.title + recipe.tips + (recipe.ingredients?.map(i => i.name).join(' ') || '')).toLowerCase();
+    
+    // デザート・軽食・副菜系のキーワード
+    const lightKeywords = [
+      "デザート", "スイーツ", "お菓子", "ケーキ", "プリン", "ゼリー", "アイス",
+      "あっさり", "サラダ", "副菜", "おつまみ", "スープ", "ドリンク", "軽い",
+      "前菜", "フルーツ", "サンドイッチ", "トースト", "小鉢"
+    ];
+    
+    // がっつり・メイン系のキーワード
+    const heavyKeywords = [
+      "ガッツリ", "メイン", "主食", "肉", "丼", "ステーキ", "ハンバーグ", "パスタ",
+      "ラーメン", "カレー", "揚げ物", "唐揚げ", "とんかつ", "焼肉", "鍋", "チャーハン",
+      "オムライス", "ピザ"
+    ];
+
+    const isLight = lightKeywords.some(key => text.includes(key));
+    const isHeavy = heavyKeywords.some(key => text.includes(key));
+
+    if (isLight && !isHeavy) return "/sub.png";
+    return "/main.png";
   };
 
   const handleSave = async (index: number) => {
@@ -167,10 +185,13 @@ export default function RecipePage() {
 
       {loading && (
         <div className={styles.loadingState}>
-          <div className="spinner-container">
-            <Loader2 className="spinner" size={48} />
+          <div className={styles.cookingAnimation}>
+            <span className={styles.emoji}>🍳</span>
+            <span className={styles.emoji}>🥕</span>
+            <span className={styles.emoji}>🔪</span>
+            <span className={styles.emoji}>🥘</span>
           </div>
-          <p>在庫から最適なレシピを考案中...</p>
+          <p className={styles.loadingText}>在庫から最高のレシピを考案中...</p>
         </div>
       )}
 
@@ -186,17 +207,11 @@ export default function RecipePage() {
             return (
               <div key={index} className={styles.recipeCard}>
                 <div className={styles.recipeHeader} onClick={() => setExpandedIndex(isExpanded ? -1 : index)}>
-                  {recipe.image_url ? (
-                    <img 
-                      src={recipe.image_url} 
-                      alt={recipe.title}
-                      className={styles.recipeIcon}
-                    />
-                  ) : (
-                    <div className={styles.recipeIconFallback}>
-                      <ChefHat size={28} color="var(--primary)" />
-                    </div>
-                  )}
+                  <img 
+                    src={getRecipeIcon(recipe)} 
+                    alt={recipe.title}
+                    className={styles.recipeIcon}
+                  />
                   
                   <div className={styles.recipeTitleGroup}>
                     <h2 className={styles.recipeTitle}>{recipe.title}</h2>

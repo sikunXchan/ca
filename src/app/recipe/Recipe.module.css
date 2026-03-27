@@ -45,14 +45,45 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 60px 0;
+  gap: 24px;
+  padding: 80px 0;
   color: var(--primary);
+  animation: fadeIn 0.5s ease-out;
 }
 
-.loadingState p {
-  font-weight: 500;
-  font-size: 15px;
+.cookingAnimation {
+  display: flex;
+  gap: 15px;
+  font-size: 40px;
+  position: relative;
+}
+
+.emoji {
+  animation: bounce 1.2s infinite ease-in-out;
+}
+
+.emoji:nth-child(2) { animation-delay: 0.2s; }
+.emoji:nth-child(3) { animation-delay: 0.4s; }
+.emoji:nth-child(4) { animation-delay: 0.6s; }
+
+.loadingText {
+  font-weight: 700;
+  font-size: 16px;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.5px;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.1); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .results {

@@ -89,6 +89,30 @@ export default function HistoryPage() {
     }
   };
 
+  const getRecipeIcon = (recipe: SavedRecipe) => {
+    const text = (recipe.title + recipe.tips + (recipe.ingredients?.map(i => i.name).join(' ') || '')).toLowerCase();
+    
+    // デザート・軽食・副菜系のキーワード
+    const lightKeywords = [
+      "デザート", "スイーツ", "お菓子", "ケーキ", "プリン", "ゼリー", "アイス",
+      "あっさり", "サラダ", "副菜", "おつまみ", "スープ", "ドリンク", "軽い",
+      "前菜", "フルーツ", "サンドイッチ", "トースト", "小鉢"
+    ];
+    
+    // がっつり・メイン系のキーワード
+    const heavyKeywords = [
+      "ガッツリ", "メイン", "主食", "肉", "丼", "ステーキ", "ハンバーグ", "パスタ",
+      "ラーメン", "カレー", "揚げ物", "唐揚げ", "とんかつ", "焼肉", "鍋", "チャーハン",
+      "オムライス", "ピザ"
+    ];
+
+    const isLight = lightKeywords.some(key => text.includes(key));
+    const isHeavy = heavyKeywords.some(key => text.includes(key));
+
+    if (isLight && !isHeavy) return "/sub.png";
+    return "/main.png";
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("ja-JP", {
@@ -120,17 +144,11 @@ export default function HistoryPage() {
                   className={styles.cardTopRow}
                   onClick={() => setExpandedId(isExpanded ? null : recipe.id)}
                 >
-                  {recipe.image_url ? (
-                    <img
-                      src={recipe.image_url}
-                      alt={recipe.title}
-                      className={styles.recipeIcon}
-                    />
-                  ) : (
-                    <div className={styles.recipeIconFallback}>
-                      <ChefHat size={24} color="var(--primary)" />
-                    </div>
-                  )}
+                  <img
+                    src={getRecipeIcon(recipe)}
+                    alt={recipe.title}
+                    className={styles.recipeIcon}
+                  />
                   
                   <div className={styles.titleInfo}>
                     <h2 className={styles.recipeTitle}>{recipe.title}</h2>
