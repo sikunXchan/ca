@@ -92,24 +92,37 @@ export default function HistoryPage() {
   const getRecipeIcon = (recipe: SavedRecipe) => {
     const text = (recipe.title + recipe.tips + (recipe.ingredients?.map(i => i.name).join(' ') || '')).toLowerCase();
     
-    // デザート・軽食・副菜系のキーワード
+    // デザート・軽食・副菜・スープ系のキーワード (sub.png)
     const lightKeywords = [
-      "デザート", "スイーツ", "お菓子", "ケーキ", "プリン", "ゼリー", "アイス",
-      "あっさり", "サラダ", "副菜", "おつまみ", "スープ", "ドリンク", "軽い",
-      "前菜", "フルーツ", "サンドイッチ", "トースト", "小鉢"
+      "デザート", "スイーツ", "お菓子", "ケーキ", "プリン", "ゼリー", "アイス", "フルーツ",
+      "あっさり", "さっぱり", "サラダ", "和え物", "お浸し", "ナムル", "マリネ", "ピクルス",
+      "スープ", "味噌汁", "吸い物", "汁物", "ポタージュ",
+      "副菜", "小鉢", "おつまみ", "前菜", "付け合わせ", "お通し", "冷奴",
+      "軽い", "ヘルシー", "豆腐", "納豆", "漬物"
     ];
     
-    // がっつり・メイン系のキーワード
+    // がっつり・メイン・主食・主菜系のキーワード (main.png)
     const heavyKeywords = [
-      "ガッツリ", "メイン", "主食", "肉", "丼", "ステーキ", "ハンバーグ", "パスタ",
-      "ラーメン", "カレー", "揚げ物", "唐揚げ", "とんかつ", "焼肉", "鍋", "チャーハン",
-      "オムライス", "ピザ"
+      "ガッツリ", "メイン", "ボリューム", "満点", "主菜", "主食",
+      "肉", "牛", "豚", "鶏", "ステーキ", "ハンバーグ", "カツ", "唐揚げ", "とんかつ", "焼肉", "ロース",
+      "魚", "鮭", "鯖", "鯛", "刺身", "焼き魚", "煮魚", "ムニエル",
+      "丼", "ライス", "ご飯", "チャーハン", "オムライス", "ピラフ", "カレー", "シチュー", "ドリア",
+      "パスタ", "スパゲッティ", "ラーメン", "うどん", "そば", "焼きそば", "担々麺",
+      "ピザ", "パン", "サンドイッチ", "バーガー",
+      "鍋", "炒め", "揚げ", "煮込み"
     ];
 
-    const isLight = lightKeywords.some(key => text.includes(key));
-    const isHeavy = heavyKeywords.some(key => text.includes(key));
+    // まず「がっつり/メイン」の要素が強いか判定
+    const hasHeavy = heavyKeywords.some(key => text.includes(key));
+    // 次に「あっさり/デザート」の要素があるか判定
+    const hasLight = lightKeywords.some(key => text.includes(key));
 
-    if (isLight && !isHeavy) return "/sub.png";
+    // メイン系のキーワードが含まれていれば、基本的に main.png
+    if (hasHeavy) return "/main.png";
+    // メイン系がなく、ライト系のキーワードがあれば sub.png
+    if (hasLight) return "/sub.png";
+    
+    // デフォルトは main
     return "/main.png";
   };
 
