@@ -73,8 +73,7 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
           }
         } catch (imgError) {
           console.error('Image generation failed for:', recipe.title, imgError);
-          // Fallback to public food image service if AI generation fails (e.g. Free Tier limits)
-          recipe.image_url = `https://loremflickr.com/400/300/food,${encodeURIComponent(recipe.title)}?lock=${index}`;
+          recipe.image_url = null;
         }
       });
 

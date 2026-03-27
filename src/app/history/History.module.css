@@ -51,6 +51,18 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
+.recipeIconFallback {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  background: rgba(255, 120, 73, 0.08);
+  border: 1px dashed rgba(255, 120, 73, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .cardContent {
   padding: 16px 20px;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2, Trash2, History, ChevronDown, ChevronUp, RefreshCw, BookOpen } from "lucide-react";
+import { Loader2, Trash2, History, ChevronDown, ChevronUp, RefreshCw, BookOpen, ChefHat, Utensils } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import styles from "./History.module.css";
@@ -120,12 +120,16 @@ export default function HistoryPage() {
                   className={styles.cardTopRow}
                   onClick={() => setExpandedId(isExpanded ? null : recipe.id)}
                 >
-                  {recipe.image_url && (
+                  {recipe.image_url ? (
                     <img
                       src={recipe.image_url}
                       alt={recipe.title}
                       className={styles.recipeIcon}
                     />
+                  ) : (
+                    <div className={styles.recipeIconFallback}>
+                      <ChefHat size={24} color="var(--primary)" />
+                    </div>
                   )}
                   
                   <div className={styles.titleInfo}>

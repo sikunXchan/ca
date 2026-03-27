@@ -128,6 +128,18 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
+.recipeIconFallback {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: rgba(255, 120, 73, 0.1);
+  border: 1px dashed rgba(255, 120, 73, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .recipeHeader {
   display: flex;
   align-items: center;

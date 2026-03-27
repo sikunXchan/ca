@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check } from "lucide-react";
+import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils } from "lucide-react";
+import confetti from "canvas-confetti";
 import styles from "./Recipe.module.css";
 
 type RecipeItem = {
@@ -82,6 +83,14 @@ export default function RecipePage() {
       localStorage.setItem("cooking_app_instruction", instruction);
       
       setSavedSet(new Set()); // Reset saved highlights for new results
+
+      // Celebration!
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#ff7849', '#20b2aa', '#fbbf24']
+      });
     } catch (e: any) {
       console.error(e);
       setErrorMsg(e.message);
@@ -177,12 +186,16 @@ export default function RecipePage() {
             return (
               <div key={index} className={styles.recipeCard}>
                 <div className={styles.recipeHeader} onClick={() => setExpandedIndex(isExpanded ? -1 : index)}>
-                  {recipe.image_url && (
+                  {recipe.image_url ? (
                     <img 
                       src={recipe.image_url} 
                       alt={recipe.title}
                       className={styles.recipeIcon}
                     />
+                  ) : (
+                    <div className={styles.recipeIconFallback}>
+                      <ChefHat size={28} color="var(--primary)" />
+                    </div>
                   )}
                   
                   <div className={styles.recipeTitleGroup}>
