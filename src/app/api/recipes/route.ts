@@ -41,20 +41,23 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
   ]
 }`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: { responseMimeType: 'application/json' }
+    // Note: The @google/genai SDK (v1.x) uses this pattern
+    const response = await (ai as any).models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      generationConfig: { responseMimeType: 'application/json' }
     });
 
-    const text = response.text || '';
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || response.text || '';
+    if (!text) throw new Error('AI output was empty');
+    
     const json = JSON.parse(text);
 
-    // Generate images for each recipe
+    // Generate images for each recipe (Graceful failure handled)
     if (json.recipes && Array.isArray(json.recipes)) {
       const imagePromises = json.recipes.map(async (recipe: any) => {
         try {
-          const imgResponse = await ai.models.generateImages({
+          const imgResponse = await (ai as any).models.generateImages({
             model: 'imagen-3.0-generate-002',
             prompt: `A beautiful, appetizing, professional food photography of ${recipe.title}. Japanese home cooking style. Top-down view on a wooden table. Warm natural lighting. High quality.`,
             config: {
@@ -70,7 +73,7 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
           }
         } catch (imgError) {
           console.error('Image generation failed for:', recipe.title, imgError);
-          // Recipe works without image - leave image_url undefined
+          // Continue without image
         }
       });
 
@@ -82,8 +85,8 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
   } catch (error: any) {
     console.error('Recipe Gen Error:', error);
     if (error.status === 429) {
-      return NextResponse.json({ error: 'しばらく時間をおいてから再度お試しください' }, { status: 429 });
+      return NextResponse.json({ error: 'しばらく時間をおいてから再度お試しください (429)' }, { status: 429 });
     }
-    return NextResponse.json({ error: 'レシピの生成に失敗しました。時間をおいて再試行してください' }, { status: 500 });
+    return NextResponse.json({ error: `レシピの生成に失敗しました: ${error.message}` }, { status: 500 });
   }
 }
