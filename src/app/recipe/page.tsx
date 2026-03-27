@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import confetti from "canvas-confetti";
 import styles from "./Recipe.module.css";
 
@@ -175,7 +175,7 @@ export default function RecipePage() {
     }
   };
 
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { opacity: 0, y: 60, scale: 0.9 },
     visible: (i: number) => ({
       opacity: 1,
@@ -183,7 +183,7 @@ export default function RecipePage() {
       scale: 1,
       transition: {
         delay: i * 0.15,
-        type: "spring" as const,
+        type: "spring",
         stiffness: 300,
         damping: 24,
       },
