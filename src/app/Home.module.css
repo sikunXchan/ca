@@ -48,6 +48,21 @@
   border-radius: var(--border-radius);
   box-shadow: var(--glass-shadow);
   transition: all 0.2s ease;
+  will-change: transform, opacity;
+}
+
+@media (max-width: 768px) {
+  .listItem {
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    padding: 18px 16px;
+  }
+
+  .deleteBtn {
+    padding: 12px;
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .listItem:hover {

@@ -60,11 +60,18 @@ export default function Home() {
   };
 
   const handleDelete = async (id: number) => {
+    // Optimistic update: remove immediately so the animation plays at once
+    const previous = ingredients;
+    setIngredients(prev => prev.filter(i => i.id !== id));
     try {
-      await fetch(`/api/inventory/${id}`, { method: "DELETE" });
-      setIngredients(ingredients.filter(i => i.id !== id));
+      const res = await fetch(`/api/inventory/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setIngredients(previous);
+        alert("削除に失敗しました");
+      }
     } catch (e) {
       console.error(e);
+      setIngredients(previous);
       alert("エラーが発生しました");
     }
   };
@@ -100,52 +107,68 @@ export default function Home() {
         </button>
       </motion.form>
 
-      {loading ? (
-        <motion.div
-          className="flex justify-center mt-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <Loader2 className="spinner" size={32} color="var(--primary)" />
-        </motion.div>
-      ) : ingredients.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}
-        >
-          <ShoppingBag size={48} style={{ marginBottom: 12, opacity: 0.5 }} />
-          <p>在庫がありません。追加してください。</p>
-        </motion.div>
-      ) : (
-        <ul className={styles.list}>
-          <AnimatePresence>
-            {ingredients.map((item) => (
-              <motion.li
-                key={item.id}
-                className={styles.listItem}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, transition: { duration: 0.2 } }}
-                transition={{
-                  type: "spring" as const,
-                  stiffness: 300,
-                  damping: 30,
-                }}
-              >
-                <span>{item.name}</span>
-                <button 
-                  className={styles.deleteBtn}
-                  onClick={() => handleDelete(item.id)}
-                  aria-label="削除"
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            key="loader"
+            className="flex justify-center mt-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Loader2 className="spinner" size={32} color="var(--primary)" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {!loading && (
+        <>
+          {/* Always keep the list in the DOM so AnimatePresence can run exit animations */}
+          <ul className={styles.list}>
+            <AnimatePresence mode="popLayout">
+              {ingredients.map((item) => (
+                <motion.li
+                  key={item.id}
+                  className={styles.listItem}
+                  initial={{ opacity: 0, scale: 0.85, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, x: -30, transition: { duration: 0.18, ease: "easeIn" } }}
+                  transition={{
+                    type: "spring" as const,
+                    stiffness: 500,
+                    damping: 28,
+                  }}
+                  layout
                 >
-                  <Trash2 size={18} />
-                </button>
-              </motion.li>
-            ))}
+                  <span>{item.name}</span>
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={() => handleDelete(item.id)}
+                    aria-label="削除"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </motion.li>
+              ))}
+            </AnimatePresence>
+          </ul>
+
+          <AnimatePresence>
+            {ingredients.length === 0 && (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}
+              >
+                <ShoppingBag size={48} style={{ marginBottom: 12, opacity: 0.5 }} />
+                <p>在庫がありません。追加してください。</p>
+              </motion.div>
+            )}
           </AnimatePresence>
-        </ul>
+        </>
       )}
     </div>
   );

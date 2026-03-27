@@ -111,42 +111,40 @@ export default function HistoryPage() {
         📚 レシピ履歴
       </motion.h1>
 
-      {loading ? (
-        <motion.div
-          className="flex justify-center mt-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <Loader2 className="spinner" size={32} color="var(--primary)" />
-        </motion.div>
-      ) : recipes.length === 0 ? (
-        <motion.div
-          className={styles.emptyState}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <BookOpen size={48} style={{ opacity: 0.5 }} />
-          <p>保存されたレシピはありません</p>
-        </motion.div>
-      ) : (
-        <AnimatePresence mode="popLayout">
-          {recipes.map((recipe, index) => {
-            const isExpanded = expandedId === recipe.id;
-            return (
-              <motion.div
-                key={recipe.id}
-                className={styles.recipeCard}
-                layout
-                initial={{ opacity: 0, y: 30, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9, x: -50 }}
-                transition={{
-                  delay: index * 0.08,
-                  type: "spring" as const,
-                  stiffness: 350,
-                  damping: 28,
-                }}
-              >
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            key="loader"
+            className="flex justify-center mt-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Loader2 className="spinner" size={32} color="var(--primary)" />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {!loading && (
+        <>
+          <AnimatePresence mode="popLayout">
+            {recipes.map((recipe, index) => {
+              const isExpanded = expandedId === recipe.id;
+              return (
+                <motion.div
+                  key={recipe.id}
+                  className={styles.recipeCard}
+                  layout
+                  initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85, x: -40, transition: { duration: 0.2, ease: "easeIn" } }}
+                  transition={{
+                    delay: index * 0.06,
+                    type: "spring" as const,
+                    stiffness: 450,
+                    damping: 28,
+                  }}
+                >
                 {recipe.image_url && (
                   <img
                     src={recipe.image_url}
@@ -243,7 +241,24 @@ export default function HistoryPage() {
               </motion.div>
             );
           })}
-        </AnimatePresence>
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {recipes.length === 0 && (
+              <motion.div
+                key="empty"
+                className={styles.emptyState}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ type: "spring", stiffness: 400, damping: 28 }}
+              >
+                <BookOpen size={48} style={{ opacity: 0.5 }} />
+                <p>保存されたレシピはありません</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
       )}
     </div>
   );

@@ -28,8 +28,13 @@ export default function RecipePage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [expandedIndex, setExpandedIndex] = useState<number>(0);
   const [savedSet, setSavedSet] = useState<Set<number>>(new Set());
+  const [isTouch, setIsTouch] = useState(false);
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [justGenerated, setJustGenerated] = useState(false);
+
+  useEffect(() => {
+    setIsTouch(window.matchMedia("(hover: none)").matches);
+  }, []);
 
   useEffect(() => {
     try {
@@ -150,7 +155,8 @@ export default function RecipePage() {
           ingredients: recipe.ingredients,
           steps: recipe.steps,
           tips: recipe.tips,
-          image_url: recipe.image_url || null,
+          // base64 data URIs are too large for DB — skip them
+          image_url: recipe.image_url?.startsWith('data:') ? null : (recipe.image_url || null),
         }),
       });
       
@@ -282,13 +288,14 @@ export default function RecipePage() {
                   variants={justGenerated ? cardVariants : undefined}
                   initial={justGenerated ? "hidden" : undefined}
                   animate={justGenerated ? "visible" : undefined}
-                  whileHover={{ 
+                  whileHover={isTouch ? undefined : {
                     y: -4,
                     rotateX: 2,
                     rotateY: -1,
                     transition: { duration: 0.3 }
                   }}
-                  style={{ transformStyle: "preserve-3d", perspective: "1000px" }}
+                  whileTap={isTouch ? { scale: 0.98 } : undefined}
+                  style={isTouch ? undefined : { transformStyle: "preserve-3d", perspective: "1000px" }}
                 >
                   {recipe.image_url && (
                     <img 
