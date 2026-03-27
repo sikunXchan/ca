@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
+import { getRecentRecipeNames } from '@/lib/db';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
@@ -11,10 +12,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Ingredients array required' }, { status: 400 });
     }
 
+    // Fetch recent recipe history for personalization
+    const recentNames = await getRecentRecipeNames(5);
+    const historyNote = recentNames.length > 0
+      ? `\n【直近の料理履歴（マンネリ防止のため、これらと異なる料理を提案してください）】\n${recentNames.join('、')}\n`
+      : '';
+
     const prompt = `あなたはプロの料理アシスタントです。以下の食材リストをもとに、消費できる最適なレシピを複数提案してください。
 【現在の在庫食材】
 ${ingredients.join(', ')}
-${instruction ? `\n【ユーザーからの追加リクエスト】\n${instruction}\n` : ''}
+${instruction ? `\n【ユーザーからの追加リクエスト】\n${instruction}\n` : ''}${historyNote}
 【重要・厳守事項】
 以下のJSON構造で、"recipes"配列の中に複数のレシピデータを格納して返してください。これ以外のテキストは一切含めないでください。
 {
@@ -40,6 +47,34 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
 
     const text = response.text || '';
     const json = JSON.parse(text);
+
+    // Generate images for each recipe
+    if (json.recipes && Array.isArray(json.recipes)) {
+      const imagePromises = json.recipes.map(async (recipe: any) => {
+        try {
+          const imgResponse = await ai.models.generateImages({
+            model: 'imagen-3.0-generate-002',
+            prompt: `A beautiful, appetizing, professional food photography of ${recipe.title}. Japanese home cooking style. Top-down view on a wooden table. Warm natural lighting. High quality.`,
+            config: {
+              numberOfImages: 1,
+            },
+          });
+          
+          if (imgResponse.generatedImages && imgResponse.generatedImages.length > 0) {
+            const imgBytes = imgResponse.generatedImages[0].image?.imageBytes;
+            if (imgBytes) {
+              recipe.image_url = `data:image/png;base64,${imgBytes}`;
+            }
+          }
+        } catch (imgError) {
+          console.error('Image generation failed for:', recipe.title, imgError);
+          // Recipe works without image - leave image_url undefined
+        }
+      });
+
+      await Promise.all(imagePromises);
+    }
+
     return NextResponse.json(json);
     
   } catch (error: any) {

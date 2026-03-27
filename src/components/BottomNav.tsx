@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Receipt, ChefHat, MessageSquare } from "lucide-react";
+import { Home, Receipt, ChefHat, BookOpen } from "lucide-react";
+import { motion } from "framer-motion";
 import styles from "./BottomNav.module.css";
 
 export default function BottomNav() {
@@ -12,7 +13,7 @@ export default function BottomNav() {
     { name: "在庫", path: "/", icon: Home },
     { name: "レシート", path: "/receipt", icon: Receipt },
     { name: "レシピ", path: "/recipe", icon: ChefHat },
-    { name: "チャット", path: "/chat", icon: MessageSquare },
+    { name: "履歴", path: "/history", icon: BookOpen },
   ];
 
   return (
@@ -26,6 +27,13 @@ export default function BottomNav() {
             href={item.path}
             className={`${styles.navItem} ${isActive ? styles.active : ""}`}
           >
+            {isActive && (
+              <motion.div
+                className={styles.activeIndicator}
+                layoutId="activeTab"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
             <Icon size={24} />
             <span>{item.name}</span>
           </Link>

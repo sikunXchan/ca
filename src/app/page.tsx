@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Plus, Loader2 } from "lucide-react";
+import { Trash2, Plus, Loader2, ShoppingBag } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import styles from "./Home.module.css";
 
 type Ingredient = {
@@ -70,9 +71,22 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>冷蔵庫の在庫</h1>
+      <motion.h1
+        className={styles.title}
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        🧊 冷蔵庫の在庫
+      </motion.h1>
       
-      <form onSubmit={handleAdd} className={styles.addForm}>
+      <motion.form
+        onSubmit={handleAdd}
+        className={styles.addForm}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
         <input 
           type="text" 
           placeholder="新しい食材を追加 (例: トマト)" 
@@ -84,28 +98,54 @@ export default function Home() {
           {adding ? <Loader2 className="spinner" size={20} /> : <Plus size={20} />}
           追加
         </button>
-      </form>
+      </motion.form>
 
       {loading ? (
-        <div className="flex justify-center mt-4">
-          <Loader2 className="spinner" size={32} />
-        </div>
+        <motion.div
+          className="flex justify-center mt-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          <Loader2 className="spinner" size={32} color="var(--primary)" />
+        </motion.div>
       ) : ingredients.length === 0 ? (
-        <p className="text-center text-muted mt-4">在庫がありません。追加してください。</p>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}
+        >
+          <ShoppingBag size={48} style={{ marginBottom: 12, opacity: 0.5 }} />
+          <p>在庫がありません。追加してください。</p>
+        </motion.div>
       ) : (
         <ul className={styles.list}>
-          {ingredients.map((item) => (
-            <li key={item.id} className={styles.listItem}>
-              <span>{item.name}</span>
-              <button 
-                className={styles.deleteBtn}
-                onClick={() => handleDelete(item.id)}
-                aria-label="削除"
+          <AnimatePresence mode="popLayout">
+            {ingredients.map((item) => (
+              <motion.li
+                key={item.id}
+                className={styles.listItem}
+                layout
+                initial={{ opacity: 0, x: -30, scale: 0.95 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 30, scale: 0.9 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 30,
+                }}
               >
-                <Trash2 size={18} />
-              </button>
-            </li>
-          ))}
+                <span>{item.name}</span>
+                <button 
+                  className={styles.deleteBtn}
+                  onClick={() => handleDelete(item.id)}
+                  aria-label="削除"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </motion.li>
+            ))}
+          </AnimatePresence>
         </ul>
       )}
     </div>

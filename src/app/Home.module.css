@@ -5,10 +5,14 @@
 }
 
 .title {
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 800;
   text-align: center;
   margin-bottom: 8px;
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .addForm {
@@ -22,6 +26,7 @@
 
 .addForm button {
   white-space: nowrap;
+  border-radius: 14px;
 }
 
 .list {
@@ -35,16 +40,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  padding: 16px 20px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
   border-radius: var(--border-radius);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.listItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(255, 120, 73, 0.12);
 }
 
 .listItem span {
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .deleteBtn {
@@ -52,13 +65,13 @@
   color: var(--text-muted);
   padding: 8px;
   border-radius: 50%;
+  box-shadow: none;
+  transition: all 0.3s;
 }
 
 .deleteBtn:hover {
-  background: rgba(255, 107, 107, 0.1);
-  color: var(--primary);
+  background: rgba(255, 107, 107, 0.12);
+  color: #ef4444;
+  transform: scale(1.15);
+  box-shadow: none;
 }
-
-
-
-
