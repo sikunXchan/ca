@@ -90,40 +90,13 @@ export default function HistoryPage() {
   };
 
   const getRecipeIcon = (recipe: SavedRecipe) => {
-    const text = (recipe.title + recipe.tips + (recipe.ingredients?.map(i => i.name).join(' ') || '')).toLowerCase();
+    // 調理時間（文字列）から数字を抽出（例：「15分」→ 15）
+    const timeStr = recipe.time || "";
+    const match = timeStr.match(/(\d+)/);
+    const minutes = match ? parseInt(match[0], 10) : 10; // 数字が見つからない場合はデフォルトで main (10分以上扱い)
     
-    // デザート・軽食・副菜・スープ系のキーワード (sub.png)
-    const lightKeywords = [
-      "デザート", "スイーツ", "お菓子", "ケーキ", "プリン", "ゼリー", "アイス", "フルーツ",
-      "あっさり", "さっぱり", "サラダ", "和え物", "お浸し", "ナムル", "マリネ", "ピクルス",
-      "スープ", "味噌汁", "吸い物", "汁物", "ポタージュ",
-      "副菜", "小鉢", "おつまみ", "前菜", "付け合わせ", "お通し", "冷奴",
-      "軽い", "ヘルシー", "豆腐", "納豆", "漬物"
-    ];
-    
-    // がっつり・メイン・主食・主菜系のキーワード (main.png)
-    const heavyKeywords = [
-      "ガッツリ", "メイン", "ボリューム", "満点", "主菜", "主食",
-      "肉", "牛", "豚", "鶏", "ステーキ", "ハンバーグ", "カツ", "唐揚げ", "とんかつ", "焼肉", "ロース",
-      "魚", "鮭", "鯖", "鯛", "刺身", "焼き魚", "煮魚", "ムニエル",
-      "丼", "ライス", "ご飯", "チャーハン", "オムライス", "ピラフ", "カレー", "シチュー", "ドリア",
-      "パスタ", "スパゲッティ", "ラーメン", "うどん", "そば", "焼きそば", "担々麺",
-      "ピザ", "パン", "サンドイッチ", "バーガー",
-      "鍋", "炒め", "揚げ", "煮込み"
-    ];
-
-    // まず「がっつり/メイン」の要素が強いか判定
-    const hasHeavy = heavyKeywords.some(key => text.includes(key));
-    // 次に「あっさり/デザート」の要素があるか判定
-    const hasLight = lightKeywords.some(key => text.includes(key));
-
-    // メイン系のキーワードが含まれていれば、基本的に main.png
-    if (hasHeavy) return "/main.png";
-    // メイン系がなく、ライト系のキーワードがあれば sub.png
-    if (hasLight) return "/sub.png";
-    
-    // デフォルトは main
-    return "/main.png";
+    // 9分以内なら sub.png、それ以外（10分以上）なら main.png
+    return minutes <= 9 ? "/sub.png" : "/main.png";
   };
 
   const formatDate = (dateStr: string) => {
