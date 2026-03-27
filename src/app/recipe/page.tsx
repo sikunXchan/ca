@@ -68,7 +68,7 @@ export default function RecipePage() {
       const res = await fetch("/api/recipes", { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ instruction })
+        body: JSON.stringify({ ingredients, instruction })
       });
       const data = await res.json();
       
