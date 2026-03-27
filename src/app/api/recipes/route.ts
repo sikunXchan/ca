@@ -41,11 +41,11 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
   ]
 }`;
 
-    // Note: The @google/genai SDK (v1.x) uses this pattern
+    // Note: The @google/genai SDK (v1.x) uses 'config', not 'generationConfig'
     const response = await (ai as any).models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'models/gemini-flash-latest',
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json' }
+      config: { responseMimeType: 'application/json' }
     });
 
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text || response.text || '';
@@ -58,7 +58,7 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
       const imagePromises = json.recipes.map(async (recipe: any) => {
         try {
           const imgResponse = await (ai as any).models.generateImages({
-            model: 'imagen-3.0-generate-002',
+            model: 'models/imagen-4.0-generate-001',
             prompt: `A beautiful, appetizing, professional food photography of ${recipe.title}. Japanese home cooking style. Top-down view on a wooden table. Warm natural lighting. High quality.`,
             config: {
               numberOfImages: 1,
