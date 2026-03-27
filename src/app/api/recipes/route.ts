@@ -55,7 +55,7 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
 
     // Generate images for each recipe (Graceful failure handled)
     if (json.recipes && Array.isArray(json.recipes)) {
-      const imagePromises = json.recipes.map(async (recipe: any) => {
+      const imagePromises = json.recipes.map(async (recipe: any, index: number) => {
         try {
           const imgResponse = await (ai as any).models.generateImages({
             model: 'models/imagen-4.0-generate-001',
@@ -73,7 +73,8 @@ ${instruction ? `\n【ユーザーからの追加リクエスト】\n${instructi
           }
         } catch (imgError) {
           console.error('Image generation failed for:', recipe.title, imgError);
-          // Continue without image
+          // Fallback to public food image service if AI generation fails (e.g. Free Tier limits)
+          recipe.image_url = `https://loremflickr.com/400/300/food,${encodeURIComponent(recipe.title)}?lock=${index}`;
         }
       });
 
