@@ -6,7 +6,9 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: Request) {
   try {
-    const { ingredients, instruction } = await req.json();
+    const body = await req.json();
+    console.log('Recipe Gen Request Body:', JSON.stringify(body));
+    const { ingredients, instruction } = body;
     
     if (!ingredients || !Array.isArray(ingredients)) {
       return NextResponse.json({ error: 'Ingredients array required' }, { status: 400 });
