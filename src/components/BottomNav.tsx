@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, Receipt, ChefHat, BookOpen } from "lucide-react";
-import { motion } from "framer-motion";
 import styles from "./BottomNav.module.css";
 
 export default function BottomNav() {
@@ -27,15 +26,7 @@ export default function BottomNav() {
             href={item.path}
             className={`${styles.navItem} ${isActive ? styles.active : ""}`}
           >
-            {isActive && (
-              <motion.div
-                className={styles.activeIndicator}
-                initial={{ opacity: 0, scaleX: 0 }}
-                animate={{ opacity: 1, scaleX: 1 }}
-                exit={{ opacity: 0, scaleX: 0 }}
-                transition={{ duration: 0.2 }}
-              />
-            )}
+            {isActive && <div className={styles.activeIndicator} />}
             <Icon size={24} />
             <span>{item.name}</span>
           </Link>

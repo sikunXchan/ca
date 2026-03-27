@@ -102,14 +102,7 @@ export default function HistoryPage() {
 
   return (
     <div className={styles.container}>
-      <motion.h1
-        className={styles.title}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        📚 レシピ履歴
-      </motion.h1>
+      <h1 className={styles.title}>📚 レシピ履歴</h1>
 
       <AnimatePresence>
         {loading && (

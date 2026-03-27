@@ -78,22 +78,9 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      <motion.h1
-        className={styles.title}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
-        🧊 冷蔵庫の在庫
-      </motion.h1>
-      
-      <motion.form
-        onSubmit={handleAdd}
-        className={styles.addForm}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-      >
+      <h1 className={styles.title}>🧊 冷蔵庫の在庫</h1>
+
+      <form onSubmit={handleAdd} className={styles.addForm}>
         <input 
           type="text" 
           placeholder="新しい食材を追加 (例: トマト)" 
@@ -105,7 +92,7 @@ export default function Home() {
           {adding ? <Loader2 className="spinner" size={20} /> : <Plus size={20} />}
           追加
         </button>
-      </motion.form>
+      </form>
 
       <AnimatePresence>
         {loading && (

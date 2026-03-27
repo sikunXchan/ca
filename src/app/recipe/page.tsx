@@ -198,21 +198,9 @@ export default function RecipePage() {
 
   return (
     <div className={styles.container}>
-      <motion.h1
-        className={styles.title}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        🍳 AIレシピ提案
-      </motion.h1>
-      
-      <motion.div
-        className={styles.inputSection}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-      >
+      <h1 className={styles.title}>🍳 AIレシピ提案</h1>
+
+      <div className={styles.inputSection}>
         <p className="mb-2 text-sm text-muted">
           現在の在庫: {ingredients.length > 0 ? ingredients.join(", ") : "なし"}
         </p>
@@ -233,7 +221,7 @@ export default function RecipePage() {
           {loading ? <Loader2 className="spinner" size={20} /> : <ChefHat size={20} />}
           レシピを提案する
         </button>
-      </motion.div>
+      </div>
 
       <AnimatePresence>
         {errorMsg && (

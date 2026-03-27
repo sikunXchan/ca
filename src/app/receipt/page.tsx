@@ -85,23 +85,11 @@ export default function ReceiptPage() {
 
   return (
     <div className={styles.container}>
-      <motion.h1
-        className={styles.title}
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        📷 レシート読み取り
-      </motion.h1>
-      
-      <motion.p
-        className="text-center text-muted mb-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
+      <h1 className={styles.title}>📷 レシート読み取り</h1>
+
+      <p className="text-center text-muted mb-4">
         レシートを撮影するか、画像をアップロードして在庫に自動追加します。
-      </motion.p>
+      </p>
 
       <AnimatePresence>
         {errorMsg && (

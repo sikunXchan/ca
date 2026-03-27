@@ -67,7 +67,14 @@
 
 .listItem:hover {
   border-color: var(--primary-light);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 120, 73, 0.08);
+}
+
+@media (hover: none) {
+  .listItem:hover {
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
+  }
 }
 
 .listItem span {

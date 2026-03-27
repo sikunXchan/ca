@@ -74,8 +74,8 @@ export async function saveRecipe(recipe: {
   image_url: string | null;
 }): Promise<SavedRecipe | null> {
   try {
-    const ingredientsJson = JSON.stringify(recipe.ingredients);
-    const stepsJson = JSON.stringify(recipe.steps);
+    const ingredientsJson = JSON.stringify(recipe.ingredients ?? []);
+    const stepsJson = JSON.stringify(recipe.steps ?? []);
     const { rows } = await sql<SavedRecipe>`
       INSERT INTO recipes (title, time, ingredients, steps, tips, image_url)
       VALUES (${recipe.title}, ${recipe.time}, ${ingredientsJson}::jsonb, ${stepsJson}::jsonb, ${recipe.tips}, ${recipe.image_url})

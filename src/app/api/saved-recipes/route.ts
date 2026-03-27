@@ -19,7 +19,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Title required' }, { status: 400 });
     }
 
-    const recipe = await saveRecipe({ title, time, ingredients, steps, tips, image_url: image_url || null });
+    const recipe = await saveRecipe({
+      title,
+      time: time ?? '',
+      ingredients: Array.isArray(ingredients) ? ingredients : [],
+      steps: Array.isArray(steps) ? steps : [],
+      tips: tips ?? '',
+      image_url: image_url ?? null,
+    });
     if (!recipe) throw new Error('DB Save returned null');
     return NextResponse.json(recipe);
   } catch (error: any) {
