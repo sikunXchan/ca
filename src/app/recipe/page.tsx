@@ -26,9 +26,25 @@ export default function RecipePage() {
   const [expandedIndex, setExpandedIndex] = useState<number>(-1);
   const [savedSet, setSavedSet] = useState<Set<number>>(new Set());
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
+  const [instruction, setInstruction] = useState("");
 
   useEffect(() => {
     fetchIngredients();
+    
+    // Load last generated recipes from localStorage
+    try {
+      const saved = localStorage.getItem("cooking_app_last_recipes");
+      if (saved) {
+        setRecipes(JSON.parse(saved));
+      }
+      
+      const savedInstruction = localStorage.getItem("cooking_app_instruction");
+      if (savedInstruction) {
+        setInstruction(savedInstruction);
+      }
+    } catch (e) {
+      console.error("Failed to load from localStorage", e);
+    }
   }, []);
 
   const fetchIngredients = async () => {
@@ -46,16 +62,26 @@ export default function RecipePage() {
   const generateRecipes = async () => {
     setLoading(true);
     setErrorMsg("");
-    setRecipes([]);
     setExpandedIndex(-1);
     
     try {
-      const res = await fetch("/api/recipes", { method: "POST" });
+      const res = await fetch("/api/recipes", { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instruction })
+      });
       const data = await res.json();
       
       if (!res.ok) throw new Error(data.error || "生成に失敗しました");
       
-      setRecipes(data.recipes || []);
+      const newRecipes = data.recipes || [];
+      setRecipes(newRecipes);
+      
+      // Save to localStorage
+      localStorage.setItem("cooking_app_last_recipes", JSON.stringify(newRecipes));
+      localStorage.setItem("cooking_app_instruction", instruction);
+      
+      setSavedSet(new Set()); // Reset saved highlights for new results
     } catch (e: any) {
       console.error(e);
       setErrorMsg(e.message);
@@ -105,6 +131,15 @@ export default function RecipePage() {
         <p className="mb-2 text-sm text-muted">
           現在の在庫: {ingredients.length > 0 ? ingredients.join(", ") : "なし"}
         </p>
+        
+        <textarea
+          placeholder="カスタム指示 (任意) 例: ガッツリ系、消化の良いもの、15分以内など"
+          value={instruction}
+          onChange={(e) => setInstruction(e.target.value)}
+          rows={3}
+          className={styles.textarea}
+        />
+
         <button 
           className={styles.generateBtn}
           onClick={generateRecipes}
