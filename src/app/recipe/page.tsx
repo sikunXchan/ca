@@ -163,10 +163,13 @@ export default function RecipePage() {
           origin: { y: 0.8 },
           colors: ['#20b2aa', '#5fd4cd', '#99f6e4'],
         });
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "保存に失敗しました");
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("保存に失敗しました");
+      alert("保存エラー: " + e.message);
     } finally {
       setSavingIndex(null);
     }
