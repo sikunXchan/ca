@@ -180,7 +180,7 @@ export default function RecipePage() {
       scale: 1,
       transition: {
         delay: i * 0.15,
-        type: "spring",
+        type: "spring" as const,
         stiffness: 300,
         damping: 24,
       },

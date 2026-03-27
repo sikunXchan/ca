@@ -142,7 +142,7 @@ export default function HistoryPage() {
                 exit={{ opacity: 0, scale: 0.9, x: -50 }}
                 transition={{
                   delay: index * 0.08,
-                  type: "spring",
+                  type: "spring" as const,
                   stiffness: 350,
                   damping: 28,
                 }}

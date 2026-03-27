@@ -130,7 +130,7 @@ export default function Home() {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, x: 30, scale: 0.9 }}
                 transition={{
-                  type: "spring",
+                  type: "spring" as const,
                   stiffness: 400,
                   damping: 30,
                 }}

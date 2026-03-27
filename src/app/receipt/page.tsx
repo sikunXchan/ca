@@ -122,12 +122,12 @@ export default function ReceiptPage() {
             className={styles.successAlert}
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            transition={{ type: "spring" as const, stiffness: 300, damping: 25 }}
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 500, damping: 20 }}
+              transition={{ delay: 0.2, type: "spring" as const, stiffness: 500, damping: 20 }}
               className={styles.successIcon}
             >
               <CheckCircle size={40} />
@@ -141,7 +141,7 @@ export default function ReceiptPage() {
                     className={styles.addedItem}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.4 + i * 0.1, type: "spring", stiffness: 400, damping: 20 }}
+                    transition={{ delay: 0.4 + i * 0.1, type: "spring" as const, stiffness: 400, damping: 20 }}
                   >
                     {item}
                   </motion.li>

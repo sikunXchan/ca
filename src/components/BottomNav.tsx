@@ -31,7 +31,7 @@ export default function BottomNav() {
               <motion.div
                 className={styles.activeIndicator}
                 layoutId="activeTab"
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                transition={{ type: "spring" as const, stiffness: 400, damping: 30 }}
               />
             )}
             <Icon size={24} />
