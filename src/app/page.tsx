@@ -172,12 +172,13 @@ export default function Home() {
                       title={item.is_pinned ? "ピンを外す" : "ピン留め（必須指定）"}
                     >
                       {pinningId === item.id ? (
-                        <Loader2 className="spinner" size={18} />
+                        <Loader2 className="spinner" size={20} strokeWidth={2.5} />
                       ) : (
                         <Pin 
-                          size={18} 
-                          fill={item.is_pinned ? "#ef4444" : "none"} 
-                          color={item.is_pinned ? "#ef4444" : "#475569"} 
+                          size={20} 
+                          strokeWidth={2.5}
+                          fill={item.is_pinned ? "white" : "none"} 
+                          color={item.is_pinned ? "white" : "var(--primary)"} 
                         />
                       )}
                     </button>
@@ -186,7 +187,7 @@ export default function Home() {
                       onClick={() => handleDelete(item.id)}
                       aria-label="削除"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={20} strokeWidth={2.5} />
                     </button>
                   </div>
                 </motion.li>
