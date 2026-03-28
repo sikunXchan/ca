@@ -184,7 +184,7 @@ export default function RecipePage() {
         <div className={styles.inventorySummary}>
           現在の在庫: {ingredients.length > 0 ? ingredients.map((i, idx) => (
             <Fragment key={i.id || idx}>
-              {i.is_pinned ? <strong>{i.name}📌</strong> : i.name}
+              {i.is_pinned ? <strong>{i.name}📍</strong> : i.name}
               {idx < ingredients.length - 1 ? ", " : ""}
             </Fragment>
           )) : "なし"}
