@@ -163,7 +163,10 @@ export default function Home() {
                   }}
                   className={`${styles.listItem} ${item.is_pinned ? styles.pinned : ""}`}
                 >
-                  <span>{item.name}</span>
+                  <div className={styles.nameSection}>
+                    {item.is_pinned && <Pin size={14} fill="#ef4444" color="#ef4444" style={{ marginRight: 6 }} />}
+                    <span>{item.name}</span>
+                  </div>
                   <div className={styles.actions}>
                     <button
                       className={`${styles.pinBtn} ${item.is_pinned ? styles.pinActive : ""}`}
