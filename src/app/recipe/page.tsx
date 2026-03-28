@@ -44,6 +44,7 @@ export default function RecipePage() {
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [instruction, setInstruction] = useState("");
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
+  const [showConditions, setShowConditions] = useState(false);
 
   useEffect(() => {
     fetchIngredients();
@@ -167,6 +168,10 @@ export default function RecipePage() {
     }
   };
 
+  const activeConditionsText = selectedConditions.length > 0 
+    ? ` (${selectedConditions.length}件選択中)` 
+    : "";
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>🍳 AIレシピ提案</h1>
@@ -174,29 +179,49 @@ export default function RecipePage() {
       <div className={styles.inputSection}>
         <div className={styles.inventorySummary}>
           現在の在庫: {ingredients.length > 0 ? ingredients.map((i, idx) => (
-            <Fragment key={i.id}>
+            <Fragment key={i.id || idx}>
               {i.is_pinned ? <strong>{i.name}📌</strong> : i.name}
               {idx < ingredients.length - 1 ? ", " : ""}
             </Fragment>
           )) : "なし"}
         </div>
         
-        <div className={styles.conditionsContainer}>
-          {CONDITION_OPTIONS.map((opt) => {
-            const isActive = selectedConditions.includes(opt.label);
-            return (
-              <motion.button
-                key={opt.id}
-                whileTap={{ scale: 0.85, rotate: [0, -5, 5, 0] }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                className={`${styles.conditionToggle} ${isActive ? styles.conditionActive : ""}`}
-                onClick={() => toggleCondition(opt.label)}
+        <div className={styles.conditionsAccordion}>
+          <button 
+            className={styles.conditionsHeader} 
+            onClick={() => setShowConditions(!showConditions)}
+          >
+            <span>✨ 条件オプションを選択 {activeConditionsText}</span>
+            {showConditions ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+          
+          <AnimatePresence>
+            {showConditions && (
+              <motion.div 
+                className={styles.conditionsContent}
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
               >
-                {opt.icon && <span>{opt.icon}</span>}
-                {opt.label}
-              </motion.button>
-            );
-          })}
+                <div className={styles.conditionsContainer}>
+                  {CONDITION_OPTIONS.map((opt) => {
+                    const isActive = selectedConditions.includes(opt.label);
+                    return (
+                      <button
+                        key={opt.id}
+                        className={`${styles.conditionToggle} ${isActive ? styles.conditionActive : ""}`}
+                        onClick={() => toggleCondition(opt.label)}
+                      >
+                        {opt.icon && <span>{opt.icon}</span>}
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <textarea
