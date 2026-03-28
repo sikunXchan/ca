@@ -177,12 +177,7 @@ export default function Home() {
                       {pinningId === item.id ? (
                         <Loader2 className="spinner" size={20} strokeWidth={2.5} />
                       ) : (
-                        <Pin 
-                          size={22} 
-                          strokeWidth={3}
-                          fill={item.is_pinned ? "currentColor" : "rgba(100, 116, 139, 0.2)"} 
-                          color="currentColor"
-                        />
+                        <span style={{ fontSize: '20px' }}>📌</span>
                       )}
                     </button>
                     <button
@@ -190,7 +185,7 @@ export default function Home() {
                       onClick={() => handleDelete(item.id)}
                       aria-label="削除"
                     >
-                      <Trash2 size={20} strokeWidth={2.5} />
+                      <span style={{ fontSize: '20px' }}>🗑️</span>
                     </button>
                   </div>
                 </motion.li>
