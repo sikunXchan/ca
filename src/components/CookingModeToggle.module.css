@@ -1,0 +1,66 @@
+.toggleContainer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggleContainer:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.toggleLabel {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--foreground);
+}
+
+.switch {
+  width: 44px;
+  height: 24px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  transition: background-color 0.3s;
+}
+
+.switchActive {
+  background: var(--primary);
+}
+
+.handle {
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.handleActive {
+  color: var(--primary);
+}
+
+/* Dark mode adjustment for the toggle container */
+:global(.cooking-mode) .toggleContainer {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+:global(.cooking-mode) .toggleContainer:hover {
+  background: rgba(255, 255, 255, 0.15);
+}

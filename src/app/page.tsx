@@ -177,8 +177,7 @@ export default function Home() {
                         <Pin 
                           size={20} 
                           strokeWidth={2.5}
-                          fill={item.is_pinned ? "white" : "none"} 
-                          color={item.is_pinned ? "white" : "var(--primary)"} 
+                          fill={item.is_pinned ? "currentColor" : "none"} 
                         />
                       )}
                     </button>

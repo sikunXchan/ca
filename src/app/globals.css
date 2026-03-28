@@ -25,6 +25,25 @@
   --gradient-hero: linear-gradient(135deg, #fff7ed 0%, #fef3c7 30%, #ffe4e6 60%, #fce7f3 100%);
 }
 
+.cooking-mode {
+  --background: #1a1512;
+  --background-secondary: #231e19;
+  --foreground: #fef7f0;
+  --border: rgba(255, 120, 73, 0.25);
+  --card-bg: rgba(45, 38, 32, 0.7);
+  --card-bg-solid: #2d2620;
+  --text-muted: #a8a29e;
+  --glass-bg: rgba(35, 30, 25, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --gradient-hero: linear-gradient(135deg, #1a1512 0%, #231e19 100%);
+}
+
+.cooking-mode body {
+  background: var(--background) !important;
+  color: var(--foreground) !important;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #1a1512;

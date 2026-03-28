@@ -4,14 +4,23 @@
   gap: 20px;
 }
 
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap; /* Fallback for small screens */
+}
+
 .title {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
-  text-align: center;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  margin: 0;
 }
 
 .inputSection {

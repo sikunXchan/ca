@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, Fragment } from "react";
 import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
+import { CookingModeToggle } from "@/components/CookingModeToggle";
 import styles from "./Recipe.module.css";
 
 type Ingredient = {
@@ -174,7 +175,10 @@ export default function RecipePage() {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>🍳 AIレシピ提案</h1>
+      <div className={styles.header}>
+        <h1 className={styles.title}>🍳 AIレシピ提案</h1>
+        <CookingModeToggle />
+      </div>
 
       <div className={styles.inputSection}>
         <div className={styles.inventorySummary}>
