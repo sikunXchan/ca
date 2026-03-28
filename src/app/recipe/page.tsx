@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, Fragment } from "react";
-import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils } from "lucide-react";
+import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { CookingModeToggle } from "@/components/CookingModeToggle";
@@ -184,7 +184,7 @@ export default function RecipePage() {
         <div className={styles.inventorySummary}>
           現在の在庫: {ingredients.length > 0 ? ingredients.map((i, idx) => (
             <Fragment key={i.id || idx}>
-              {i.is_pinned ? <strong>{i.name}📍</strong> : i.name}
+              {i.is_pinned ? <strong>{i.name}<Pin size={14} fill="#ef4444" color="#ef4444" style={{ display: 'inline', verticalAlign: 'middle', marginLeft: 2 }} /></strong> : i.name}
               {idx < ingredients.length - 1 ? ", " : ""}
             </Fragment>
           )) : "なし"}

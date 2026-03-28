@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Plus, Loader2, ShoppingBag } from "lucide-react";
+import { Trash2, Plus, Loader2, ShoppingBag, Pin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import styles from "./Home.module.css";
@@ -164,7 +164,7 @@ export default function Home() {
                   className={`${styles.listItem} ${item.is_pinned ? styles.pinned : ""}`}
                 >
                   <div className={styles.nameSection}>
-                    {item.is_pinned && <span style={{ marginRight: 6, fontSize: '14px' }}>📍</span>}
+                    {item.is_pinned && <Pin size={14} fill="#ef4444" color="#ef4444" style={{ marginRight: 6 }} />}
                     <span>{item.name}</span>
                   </div>
                   <div className={styles.actions}>
