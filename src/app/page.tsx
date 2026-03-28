@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Plus, Loader2, ShoppingBag } from "lucide-react";
+import { Trash2, Plus, Loader2, ShoppingBag, Pin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./Home.module.css";
 
 type Ingredient = {
   id: number;
   name: string;
+  is_pinned: boolean;
 };
 
 export default function Home() {
@@ -15,6 +16,7 @@ export default function Home() {
   const [newName, setNewName] = useState("");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [pinningId, setPinningId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchIngredients();
@@ -76,6 +78,36 @@ export default function Home() {
     }
   };
 
+  const handleTogglePin = async (item: Ingredient) => {
+    setPinningId(item.id);
+    const pinState = !item.is_pinned;
+    
+    // Optimistic update
+    setIngredients(prev => {
+      const next = prev.map(i => i.id === item.id ? { ...i, is_pinned: pinState } : i);
+      // Sort: pinned first
+      return next.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0));
+    });
+
+    try {
+      const res = await fetch(`/api/inventory/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_pinned: pinState }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed");
+      }
+    } catch (e) {
+      console.error(e);
+      // Revert optimistic update on error
+      fetchIngredients();
+    } finally {
+      setPinningId(null);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>🧊 冷蔵庫の在庫</h1>
@@ -104,15 +136,29 @@ export default function Home() {
         <>
           <ul className={styles.list}>
             {ingredients.map((item) => (
-              <li key={item.id} className={styles.listItem}>
+              <li key={item.id} className={`${styles.listItem} ${item.is_pinned ? styles.pinned : ""}`}>
                 <span>{item.name}</span>
-                <button
-                  className={styles.deleteBtn}
-                  onClick={() => handleDelete(item.id)}
-                  aria-label="削除"
-                >
-                  <Trash2 size={18} />
-                </button>
+                <div className={styles.actions}>
+                  <button
+                    className={`${styles.pinBtn} ${item.is_pinned ? styles.pinActive : ""}`}
+                    onClick={() => handleTogglePin(item)}
+                    disabled={pinningId === item.id}
+                    title={item.is_pinned ? "ピンを外す" : "ピン留め（必須指定）"}
+                  >
+                    {pinningId === item.id ? (
+                      <Loader2 className="spinner" size={18} />
+                    ) : (
+                      <Pin size={18} fill={item.is_pinned ? "#ef4444" : "none"} />
+                    )}
+                  </button>
+                  <button
+                    className={styles.deleteBtn}
+                    onClick={() => handleDelete(item.id)}
+                    aria-label="削除"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

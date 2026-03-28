@@ -3,6 +3,14 @@ import { sql } from '@vercel/postgres';
 export type Ingredient = {
   id: number;
   name: string;
+  is_pinned: boolean;
+  created_at: Date;
+};
+
+export type ShoppingItem = {
+  id: number;
+  name: string;
+  is_completed: boolean;
   created_at: Date;
 };
 
@@ -21,7 +29,7 @@ export type SavedRecipe = {
 
 export async function getIngredients(): Promise<Ingredient[]> {
   try {
-    const { rows } = await sql<Ingredient>`SELECT * FROM ingredients ORDER BY created_at DESC`;
+    const { rows } = await sql<Ingredient>`SELECT * FROM ingredients ORDER BY is_pinned DESC, created_at DESC`;
     return rows;
   } catch (error) {
     console.error('Failed to fetch ingredients:', error);
@@ -32,8 +40,8 @@ export async function getIngredients(): Promise<Ingredient[]> {
 export async function addIngredient(name: string): Promise<Ingredient | null> {
   try {
     const { rows } = await sql<Ingredient>`
-      INSERT INTO ingredients (name)
-      VALUES (${name})
+      INSERT INTO ingredients (name, is_pinned)
+      VALUES (${name}, false)
       RETURNING *
     `;
     return rows[0];
@@ -49,6 +57,76 @@ export async function deleteIngredient(id: number): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('Failed to delete ingredient:', error);
+    return false;
+  }
+}
+
+export async function togglePinIngredient(id: number, is_pinned: boolean): Promise<Ingredient | null> {
+  try {
+    const { rows } = await sql<Ingredient>`
+      UPDATE ingredients SET is_pinned = ${is_pinned} WHERE id = ${id}
+      RETURNING *
+    `;
+    return rows[0] || null;
+  } catch (error) {
+    console.error('Failed to toggle pin ingredient:', error);
+    return null;
+  }
+}
+
+// --- Shopping List ---
+
+export async function getShoppingList(): Promise<ShoppingItem[]> {
+  try {
+    const { rows } = await sql<ShoppingItem>`SELECT * FROM shopping_list ORDER BY created_at DESC`;
+    return rows;
+  } catch (error) {
+    console.error('Failed to fetch shopping list:', error);
+    return [];
+  }
+}
+
+export async function addShoppingItem(name: string): Promise<ShoppingItem | null> {
+  try {
+    const { rows } = await sql<ShoppingItem>`
+      INSERT INTO shopping_list (name)
+      VALUES (${name})
+      RETURNING *
+    `;
+    return rows[0];
+  } catch (error) {
+    console.error('Failed to add shopping item:', error);
+    return null;
+  }
+}
+
+export async function deleteShoppingItem(id: number): Promise<boolean> {
+  try {
+    await sql`DELETE FROM shopping_list WHERE id = ${id}`;
+    return true;
+  } catch (error) {
+    console.error('Failed to delete shopping item:', error);
+    return false;
+  }
+}
+
+export async function completeShoppingItem(id: number): Promise<boolean> {
+  try {
+    // 1. Get the item name
+    const { rows } = await sql<{ name: string }>`SELECT name FROM shopping_list WHERE id = ${id}`;
+    if (rows.length === 0) return false;
+    
+    const name = rows[0].name;
+    
+    // 2. Add to ingredients
+    await addIngredient(name);
+    
+    // 3. Delete from shopping list
+    await sql`DELETE FROM shopping_list WHERE id = ${id}`;
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to complete shopping item:', error);
     return false;
   }
 }

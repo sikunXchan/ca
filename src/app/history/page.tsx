@@ -28,6 +28,9 @@ export default function HistoryPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [remakingId, setRemakingId] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [targetId, setTargetId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchRecipes();
@@ -48,7 +51,15 @@ export default function HistoryPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const confirmDelete = (id: number) => {
+    setTargetId(id);
+    setModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (targetId === null) return;
+    const id = targetId;
+    setModalOpen(false);
     setDeletingId(id);
     try {
       await fetch(`/api/saved-recipes/${id}`, { method: "DELETE" });
@@ -59,6 +70,7 @@ export default function HistoryPage() {
       alert("削除に失敗しました");
     } finally {
       setDeletingId(null);
+      setTargetId(null);
     }
   };
 
@@ -89,6 +101,46 @@ export default function HistoryPage() {
     }
   };
 
+  const handleRemake = async (recipe: SavedRecipe) => {
+    setRemakingId(recipe.id);
+    try {
+      // 1. Generate remake from AI
+      const res = await fetch("/api/recipes/remake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipe }),
+      });
+      const remakeData = await res.json();
+      
+      if (!res.ok) throw new Error(remakeData.error || "リメイクに失敗しました");
+
+      // 2. Save the new recipe
+      const saveRes = await fetch("/api/saved-recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(remakeData),
+      });
+      
+      if (saveRes.ok) {
+        const saved = await saveRes.json();
+        setRecipes([saved, ...recipes]);
+        setExpandedId(saved.id); // Expand the new one
+        
+        confetti({
+          particleCount: 80,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#ff7849', '#f472b6', '#8b5cf6'],
+        });
+      }
+    } catch (e: any) {
+      console.error(e);
+      alert(e.message);
+    } finally {
+      setRemakingId(null);
+    }
+  };
+
   const getRecipeIcon = (recipe: SavedRecipe) => {
     // 調理時間（文字列）から数字を抽出（例：「15分」→ 15）
     const timeStr = recipe.time || "";
@@ -113,6 +165,40 @@ export default function HistoryPage() {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>📚 レシピ履歴</h1>
+
+      <AnimatePresence>
+        {modalOpen && (
+          <motion.div 
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className={styles.modalContent}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            >
+              <div className={styles.modalIcon}>
+                <Trash2 size={32} />
+              </div>
+              <h2 className={styles.modalTitle}>本当に削除しますか？</h2>
+              <p className={styles.modalText}>
+                このレシピを履歴から削除します。<br />この操作は取り消せません。
+              </p>
+              <div className={styles.modalActions}>
+                <button className={styles.cancelBtn} onClick={() => setModalOpen(false)}>
+                  キャンセル
+                </button>
+                <button className={styles.confirmDeleteBtn} onClick={handleDelete}>
+                  削除する
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {loading && (
         <div className="flex justify-center mt-4">
@@ -153,20 +239,33 @@ export default function HistoryPage() {
 
                   <div className={styles.cardActions}>
                     <button
+                      className={styles.remakeBtn}
+                      onClick={(e) => { e.stopPropagation(); handleRemake(recipe); }}
+                      disabled={remakingId === recipe.id}
+                    >
+                      {remakingId === recipe.id ? (
+                        <Loader2 className="spinner" size={14} />
+                      ) : (
+                        <ChefHat size={14} />
+                      )}
+                      この残りでリメイク！
+                    </button>
+                    <button
                       className={styles.recookBtn}
                       onClick={(e) => { e.stopPropagation(); handleRecook(recipe.id); }}
                       disabled={updatingId === recipe.id}
+                      title="今日作った"
                     >
                       {updatingId === recipe.id ? (
                         <Loader2 className="spinner" size={14} />
                       ) : (
                         <RefreshCw size={14} />
                       )}
-                      もう一度作った
+                      再作成
                     </button>
                     <button
                       className={styles.deleteBtn}
-                      onClick={(e) => { e.stopPropagation(); handleDelete(recipe.id); }}
+                      onClick={(e) => { e.stopPropagation(); confirmDelete(recipe.id); }}
                       disabled={deletingId === recipe.id}
                     >
                       {deletingId === recipe.id ? (

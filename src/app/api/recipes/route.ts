@@ -8,11 +8,19 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     console.log('Recipe Gen Request Body:', JSON.stringify(body));
-    const { ingredients, instruction } = body;
+    const { ingredients, pinnedIngredients, conditions, instruction } = body;
     
     if (!ingredients || !Array.isArray(ingredients)) {
       return NextResponse.json({ error: 'Ingredients array required' }, { status: 400 });
     }
+
+    const pinnedSection = pinnedIngredients && pinnedIngredients.length > 0
+      ? `\n【ピン留め食材（これらを必ず主役・または必須で使用してください！）】\n${pinnedIngredients.join(', ')}\n`
+      : '';
+
+    const conditionsSection = conditions && conditions.length > 0
+      ? `\n【重要：守るべき調理条件】\n${conditions.join('、')}\n`
+      : '';
 
     // Fetch recent recipe history for personalization
     const recentNames = await getRecentRecipeNames(5);
@@ -20,12 +28,14 @@ export async function POST(req: Request) {
       ? `\n【直近の料理履歴（マンネリ防止のため、これらと異なる料理を提案してください）】\n${recentNames.join('、')}\n`
       : '';
 
-    const prompt = `あなたはプロの料理アシスタントです。以下の食材リストをもとに、消費できる最適なレシピを複数提案してください。
+    const prompt = `あなたはプロの料理アシスタントです。以下の内容をもとに、消費できる最高のレシピを複数提案してください。
 【現在の在庫食材】
 ${ingredients.join(', ')}
-${instruction ? `\n【ユーザーからの追加リクエスト】\n${instruction}\n` : ''}${historyNote}
+${pinnedSection}${conditionsSection}${instruction ? `\n【ユーザーからのカスタム指示】\n${instruction}\n` : ''}${historyNote}
 【重要・厳守事項】
-以下のJSON構造で、"recipes"配列の中に複数のレシピデータを格納して返してください。これ以外のテキストは一切含めないでください。
+1. ピン留め食材がある場合、それらを「主役」として扱うか、レシピに「必ず」組み込んでください。
+2. 調理条件（低カロリー、時短など）が指定されている場合、必ずその条件を満たすレシピにしてください。
+3. 以下のJSON構造で、"recipes"配列の中に複数のレシピデータを格納して返してください。これ以外のテキストは一切含めないでください。
 {
   "recipes": [
     {

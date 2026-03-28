@@ -1,9 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Fragment } from "react";
 import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import styles from "./Recipe.module.css";
+
+type Ingredient = {
+  id: number;
+  name: string;
+  is_pinned: boolean;
+};
 
 type RecipeItem = {
   name: string;
@@ -19,8 +26,16 @@ type Recipe = {
   image_url: string | null;
 };
 
+const CONDITION_OPTIONS = [
+  { id: "low-cal", label: "低カロリー", icon: "🍃" },
+  { id: "party", label: "パーティメニュー", icon: "🎉" },
+  { id: "gentle", label: "🤒お腹にやさしい", icon: "" },
+  { id: "protein", label: "💪ガッツリ高タンパク", icon: "" },
+  { id: "fast", label: "⏳超時短 (10分以内)", icon: "" },
+];
+
 export default function RecipePage() {
-  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
@@ -28,6 +43,7 @@ export default function RecipePage() {
   const [savedSet, setSavedSet] = useState<Set<number>>(new Set());
   const [savingIndex, setSavingIndex] = useState<number | null>(null);
   const [instruction, setInstruction] = useState("");
+  const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
 
   useEffect(() => {
     fetchIngredients();
@@ -48,23 +64,38 @@ export default function RecipePage() {
       const res = await fetch("/api/inventory");
       const data = await res.json();
       if (Array.isArray(data)) {
-        setIngredients(data.map((i: any) => i.name));
+        setIngredients(data);
       }
     } catch (e) {
       console.error(e);
     }
   };
 
+  const toggleCondition = (label: string) => {
+    setSelectedConditions(prev => 
+      prev.includes(label) ? prev.filter(c => c !== label) : [...prev, label]
+    );
+  };
+
   const generateRecipes = async () => {
+    if (ingredients.length === 0) return;
     setLoading(true);
     setErrorMsg("");
     setExpandedIndex(-1);
+    
+    const ingredientNames = ingredients.map(i => i.name);
+    const pinnedNames = ingredients.filter(i => i.is_pinned).map(i => i.name);
     
     try {
       const res = await fetch("/api/recipes", { 
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingredients, instruction })
+        body: JSON.stringify({ 
+          ingredients: ingredientNames,
+          pinnedIngredients: pinnedNames,
+          conditions: selectedConditions,
+          instruction 
+        })
       });
       const data = await res.json();
       
@@ -141,12 +172,35 @@ export default function RecipePage() {
       <h1 className={styles.title}>🍳 AIレシピ提案</h1>
 
       <div className={styles.inputSection}>
-        <p className="mb-2 text-sm text-muted">
-          現在の在庫: {ingredients.length > 0 ? ingredients.join(", ") : "なし"}
-        </p>
+        <div className={styles.inventorySummary}>
+          現在の在庫: {ingredients.length > 0 ? ingredients.map((i, idx) => (
+            <Fragment key={i.id}>
+              {i.is_pinned ? <strong>{i.name}📌</strong> : i.name}
+              {idx < ingredients.length - 1 ? ", " : ""}
+            </Fragment>
+          )) : "なし"}
+        </div>
         
+        <div className={styles.conditionsContainer}>
+          {CONDITION_OPTIONS.map((opt) => {
+            const isActive = selectedConditions.includes(opt.label);
+            return (
+              <motion.button
+                key={opt.id}
+                whileTap={{ scale: 0.85, rotate: [0, -5, 5, 0] }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                className={`${styles.conditionToggle} ${isActive ? styles.conditionActive : ""}`}
+                onClick={() => toggleCondition(opt.label)}
+              >
+                {opt.icon && <span>{opt.icon}</span>}
+                {opt.label}
+              </motion.button>
+            );
+          })}
+        </div>
+
         <textarea
-          placeholder="カスタム指示 (任意) 例: ガッツリ系、消化の良いもの、15分以内など"
+          placeholder="カスタム指示 (任意) 例: 子供が喜ぶ味付け、辛さ控えめなど"
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
           rows={3}

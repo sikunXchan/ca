@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { deleteIngredient, togglePinIngredient } from '@/lib/db';
+import { deleteShoppingItem, completeShoppingItem } from '@/lib/db';
 
 export async function DELETE(
   req: Request,
@@ -10,7 +10,7 @@ export async function DELETE(
     const id = parseInt(idStr, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
-    await deleteIngredient(id);
+    await deleteShoppingItem(id);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
@@ -26,10 +26,11 @@ export async function PATCH(
     const id = parseInt(idStr, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
-    const { is_pinned } = await req.json();
-    const updated = await togglePinIngredient(id, is_pinned);
-    return NextResponse.json(updated);
+    const success = await completeShoppingItem(id);
+    if (!success) return NextResponse.json({ error: 'Failed' }, { status: 400 });
+    
+    return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to complete' }, { status: 500 });
   }
 }

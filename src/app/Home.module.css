@@ -82,6 +82,40 @@
   font-weight: 600;
 }
 
+.listItem.pinned {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+}
+
+.listItem.pinned span {
+  color: #ef4444;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.pinBtn {
+  background: transparent;
+  color: var(--text-muted);
+  padding: 10px;
+  border-radius: 12px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+
+.pinBtn:hover {
+  background: rgba(255, 120, 73, 0.1);
+  color: var(--primary);
+}
+
+.pinActive {
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.1);
+}
+
 .deleteBtn {
   background: rgba(239, 68, 68, 0.05);
   color: var(--text-muted);
