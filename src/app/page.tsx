@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Trash2, Plus, Loader2, ShoppingBag, Pin } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import styles from "./Home.module.css";
 
 type Ingredient = {
@@ -82,11 +83,22 @@ export default function Home() {
     setPinningId(item.id);
     const pinState = !item.is_pinned;
     
+    // Star particle effect on pin
+    if (pinState) {
+      confetti({
+        particleCount: 40,
+        spread: 70,
+        origin: { y: 0.6 },
+        shapes: ['star'],
+        colors: ['#FFD700', '#FFA500', '#FF7849'],
+      });
+    }
+
     // Optimistic update
     setIngredients(prev => {
       const next = prev.map(i => i.id === item.id ? { ...i, is_pinned: pinState } : i);
       // Sort: pinned first
-      return next.sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0));
+      return [...next].sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0));
     });
 
     try {
@@ -135,32 +147,47 @@ export default function Home() {
       {!loading && (
         <>
           <ul className={styles.list}>
-            {ingredients.map((item) => (
-              <li key={item.id} className={`${styles.listItem} ${item.is_pinned ? styles.pinned : ""}`}>
-                <span>{item.name}</span>
-                <div className={styles.actions}>
-                  <button
-                    className={`${styles.pinBtn} ${item.is_pinned ? styles.pinActive : ""}`}
-                    onClick={() => handleTogglePin(item)}
-                    disabled={pinningId === item.id}
-                    title={item.is_pinned ? "ピンを外す" : "ピン留め（必須指定）"}
-                  >
-                    {pinningId === item.id ? (
-                      <Loader2 className="spinner" size={18} />
-                    ) : (
-                      <Pin size={18} fill={item.is_pinned ? "#ef4444" : "none"} />
-                    )}
-                  </button>
-                  <button
-                    className={styles.deleteBtn}
-                    onClick={() => handleDelete(item.id)}
-                    aria-label="削除"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </li>
-            ))}
+            <AnimatePresence initial={false}>
+              {ingredients.map((item) => (
+                <motion.li 
+                  key={item.id} 
+                  layout
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ 
+                    type: "spring", 
+                    stiffness: 500, 
+                    damping: 30,
+                    opacity: { duration: 0.2 } 
+                  }}
+                  className={`${styles.listItem} ${item.is_pinned ? styles.pinned : ""}`}
+                >
+                  <span>{item.name}</span>
+                  <div className={styles.actions}>
+                    <button
+                      className={`${styles.pinBtn} ${item.is_pinned ? styles.pinActive : ""}`}
+                      onClick={() => handleTogglePin(item)}
+                      disabled={pinningId === item.id}
+                      title={item.is_pinned ? "ピンを外す" : "ピン留め（必須指定）"}
+                    >
+                      {pinningId === item.id ? (
+                        <Loader2 className="spinner" size={18} />
+                      ) : (
+                        <Pin size={18} fill={item.is_pinned ? "#ef4444" : "none"} />
+                      )}
+                    </button>
+                    <button
+                      className={styles.deleteBtn}
+                      onClick={() => handleDelete(item.id)}
+                      aria-label="削除"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </motion.li>
+              ))}
+            </AnimatePresence>
           </ul>
 
           {ingredients.length === 0 && (

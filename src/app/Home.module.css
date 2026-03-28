@@ -83,37 +83,44 @@
 }
 
 .listItem.pinned {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.05);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+  /* Spotlight/Accent Background */
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15) 0%, rgba(255, 120, 73, 0.15) 100%) !important;
+  border: 1px solid rgba(255, 120, 73, 0.4) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(255, 120, 73, 0.25);
+  z-index: 10;
 }
 
 .listItem.pinned span {
-  color: #ef4444;
+  color: #c2410c; /* Deeper accent color for pinned text */
+  font-weight: 800;
 }
 
 .actions {
   display: flex;
-  gap: 8px;
+  gap: 10px;
 }
 
 .pinBtn {
-  background: transparent;
+  background: white;
   color: var(--text-muted);
-  padding: 10px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
-  transition: all 0.2s;
-  border: 1px solid transparent;
-}
-
-.pinBtn:hover {
-  background: rgba(255, 120, 73, 0.1);
-  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid var(--border);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .pinActive {
+  background: white !important;
   color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444 !important;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2) !important;
+  transform: rotate(-45deg); /* Lock completion rotation */
 }
 
 .deleteBtn {
