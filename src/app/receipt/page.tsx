@@ -49,7 +49,18 @@ export default function ReceiptPage() {
         throw new Error(data.error || "読み取りに失敗しました");
       }
 
-      setAddedItems(data.ingredients || []);
+      const ingredients: string[] = data.ingredients || [];
+      
+      // 在庫に食材を追加
+      for (const item of ingredients) {
+        await fetch("/api/inventory", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: item }),
+        });
+      }
+
+      setAddedItems(ingredients);
       setFile(null);
       setPreview(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
