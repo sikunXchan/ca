@@ -6,7 +6,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const file = formData.get('image') as File;
+    const file = formData.get('file') as File;
     if (!file) return NextResponse.json({ error: 'Image required' }, { status: 400 });
 
     const buffer = await file.arrayBuffer();
