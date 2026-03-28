@@ -178,9 +178,10 @@ export default function Home() {
                         <Loader2 className="spinner" size={20} strokeWidth={2.5} />
                       ) : (
                         <Pin 
-                          size={20} 
-                          strokeWidth={2.5}
-                          fill={item.is_pinned ? "currentColor" : "none"} 
+                          size={22} 
+                          strokeWidth={3}
+                          fill={item.is_pinned ? "currentColor" : "rgba(100, 116, 139, 0.2)"} 
+                          color="currentColor"
                         />
                       )}
                     </button>
