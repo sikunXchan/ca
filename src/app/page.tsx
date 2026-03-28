@@ -174,7 +174,11 @@ export default function Home() {
                       {pinningId === item.id ? (
                         <Loader2 className="spinner" size={18} />
                       ) : (
-                        <Pin size={18} fill={item.is_pinned ? "#ef4444" : "none"} />
+                        <Pin 
+                          size={18} 
+                          fill={item.is_pinned ? "#ef4444" : "none"} 
+                          color={item.is_pinned ? "#ef4444" : "#475569"} 
+                        />
                       )}
                     </button>
                     <button

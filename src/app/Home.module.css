@@ -102,25 +102,32 @@
 }
 
 .pinBtn {
-  background: white;
-  color: var(--text-muted);
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #475569 !important; /* Darker Slate-600 for high contrast */
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   border: 1px solid var(--border);
   transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+
+.pinBtn:hover {
+  background: white !important;
+  color: var(--primary) !important;
+  border-color: var(--primary-light) !important;
+  transform: scale(1.1);
 }
 
 .pinActive {
   background: white !important;
   color: #ef4444 !important;
   border-color: #ef4444 !important;
-  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.2) !important;
-  transform: rotate(-45deg); /* Lock completion rotation */
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3) !important;
 }
 
 .deleteBtn {
