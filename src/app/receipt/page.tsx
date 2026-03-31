@@ -94,18 +94,24 @@ export default function ReceiptPage() {
             <CheckCircle size={40} />
           </div>
           <div>
-            <p style={{ fontWeight: 600 }}>以下の食材を追加しました：</p>
+            <p style={{ fontWeight: 600, fontSize: '18px', color: 'var(--primary)', marginBottom: '8px' }}>読み取り完了！</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '16px' }}>既存の在庫と重複するものはスキップされました。</p>
+            
+            <div className={styles.addedItemsLabel}>
+              📋 在庫に反映した項目：
+            </div>
             <ul className={styles.addedItemsList}>
               {addedItems.map((item, i) => (
                 <li key={i} className={styles.addedItem}>
-                  {item}
+                  <span>{item}</span>
+                  <span className={styles.statusBadge}>OK</span>
                 </li>
               ))}
             </ul>
             <button
               className={styles.submitBtn}
               onClick={() => router.push("/")}
-              style={{ marginTop: "16px" }}
+              style={{ marginTop: "24px" }}
             >
               在庫を確認する
             </button>

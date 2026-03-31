@@ -40,14 +40,21 @@ export default function Home() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim()) return;
+    const cleanName = newName.trim();
+    if (!cleanName) return;
+
+    // Check for duplicates
+    if (ingredients.some(i => i.name.toLowerCase() === cleanName.toLowerCase())) {
+      alert("その食材はすでに在庫にあります。");
+      return;
+    }
     
     setAdding(true);
     try {
       const res = await fetch("/api/inventory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim() }),
+        body: JSON.stringify({ name: cleanName }),
       });
       const data = await res.json();
       if (data && data.id) {

@@ -39,9 +39,21 @@ export async function getIngredients(): Promise<Ingredient[]> {
 
 export async function addIngredient(name: string): Promise<Ingredient | null> {
   try {
+    const cleanName = name.trim();
+    // Check if exists first
+    const { rows: existing } = await sql<Ingredient>`
+      SELECT * FROM ingredients 
+      WHERE LOWER(TRIM(name)) = LOWER(${cleanName})
+      LIMIT 1
+    `;
+    
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
     const { rows } = await sql<Ingredient>`
       INSERT INTO ingredients (name, is_pinned)
-      VALUES (${name}, false)
+      VALUES (${cleanName}, false)
       RETURNING *
     `;
     return rows[0];
@@ -134,11 +146,17 @@ export async function completeShoppingItem(id: number): Promise<boolean> {
     if (rows.length === 0) return false;
     
     const name = rows[0].name;
+    const cleanName = name.trim();
     
-    // 2. Add to ingredients
-    await addIngredient(name);
+    // 2. Check if ingredient already exists (case insensitive)
+    const { rows: existing } = await sql`SELECT id FROM ingredients WHERE LOWER(TRIM(name)) = LOWER(${cleanName})`;
     
-    // 3. Delete from shopping list
+    if (existing.length === 0) {
+      // 3. Add to ingredients only if it doesn't exist
+      await addIngredient(cleanName);
+    }
+    
+    // 4. Always delete from shopping list
     await sql`DELETE FROM shopping_list WHERE id = ${id}`;
     
     return true;

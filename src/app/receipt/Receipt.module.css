@@ -114,21 +114,45 @@
   box-shadow: 0 6px 25px rgba(32, 178, 170, 0.4);
 }
 
+.addedItemsLabel {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--foreground);
+  margin-bottom: 12px;
+}
+
 .addedItemsList {
   list-style: none;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
   padding: 0;
+  max-width: 320px;
+  margin: 0 auto;
 }
 
 .addedItem {
-  background: rgba(32, 178, 170, 0.1);
-  color: var(--secondary);
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 14px;
+  background: white;
+  color: var(--foreground);
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 15px;
   font-weight: 600;
-  border: 1px solid rgba(32, 178, 170, 0.2);
+  border: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.statusBadge {
+  font-size: 10px;
+  font-weight: 800;
+  background: var(--gradient-cool);
+  color: white;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
 }

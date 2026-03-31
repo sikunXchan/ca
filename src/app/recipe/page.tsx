@@ -242,18 +242,23 @@ export default function RecipePage() {
                 </div>
 
                 <div className={styles.servingsRow}>
-                  <label className={styles.servingsLabel}>
-                    <Users size={16} />
-                    🍽️ 分量（人数分）
-                  </label>
+                  <div className={styles.servingsHeader}>
+                    <label className={styles.servingsLabel}>
+                      <Utensils size={18} color="#ff7849" />
+                      <span>🍽️ 分量を調整</span>
+                    </label>
+                    <div className={styles.servingsHint}>
+                      レシピの人数分を指定できます
+                    </div>
+                  </div>
                   <select
                     className={styles.servingsSelect}
                     value={servings ?? ""}
                     onChange={(e) => setServings(e.target.value ? Number(e.target.value) : null)}
                   >
-                    <option value="">指定なし</option>
+                    <option value="">指定なし (材料のみで提案)</option>
                     {SERVINGS_OPTIONS.map((n) => (
-                      <option key={n} value={n}>{n}人分</option>
+                      <option key={n} value={n}>{n}人分 の分量で提案</option>
                     ))}
                   </select>
                 </div>
