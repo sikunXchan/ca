@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     console.log('Recipe Gen Request Body:', JSON.stringify(body));
-    const { ingredients, pinnedIngredients, conditions, instruction } = body;
+    const { ingredients, pinnedIngredients, conditions, instruction, servings } = body;
     
     if (!ingredients || !Array.isArray(ingredients)) {
       return NextResponse.json({ error: 'Ingredients array required' }, { status: 400 });
@@ -28,10 +28,14 @@ export async function POST(req: Request) {
       ? `\n【直近の料理履歴（マンネリ防止のため、これらと異なる料理を提案してください）】\n${recentNames.join('、')}\n`
       : '';
 
+    const servingsSection = servings
+      ? `\n【分量指定】\nすべてのレシピの材料・分量は ${servings}人分 で記載してください。\n`
+      : '';
+
     const prompt = `あなたはプロの料理アシスタントです。以下の内容をもとに、消費できる最高のレシピを複数提案してください。
 【現在の在庫食材】
 ${ingredients.join(', ')}
-${pinnedSection}${conditionsSection}${instruction ? `\n【ユーザーからのカスタム指示】\n${instruction}\n` : ''}${historyNote}
+${pinnedSection}${conditionsSection}${servingsSection}${instruction ? `\n【ユーザーからのカスタム指示】\n${instruction}\n` : ''}${historyNote}
 【重要・厳守事項】
 1. ピン留め食材がある場合、それらを「主役」として扱うか、レシピに「必ず」組み込んでください。
 2. 調理条件（低カロリー、時短など）が指定されている場合、必ずその条件を満たすレシピにしてください。

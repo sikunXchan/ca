@@ -61,6 +61,23 @@ export async function deleteIngredient(id: number): Promise<boolean> {
   }
 }
 
+export async function removeDuplicateIngredients(): Promise<number> {
+  try {
+    const result = await sql`
+      DELETE FROM ingredients
+      WHERE id NOT IN (
+        SELECT MIN(id) FROM ingredients GROUP BY LOWER(TRIM(name))
+      )
+    `;
+    const removed = result.rowCount ?? 0;
+    console.log(`Removed ${removed} duplicate ingredient(s)`);
+    return removed;
+  } catch (error) {
+    console.error('Failed to remove duplicate ingredients:', error);
+    return 0;
+  }
+}
+
 export async function togglePinIngredient(id: number, is_pinned: boolean): Promise<Ingredient | null> {
   try {
     const { rows } = await sql<Ingredient>`

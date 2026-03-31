@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, Fragment } from "react";
-import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin } from "lucide-react";
+import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { CookingModeToggle } from "@/components/CookingModeToggle";
@@ -35,6 +35,8 @@ const CONDITION_OPTIONS = [
   { id: "fast", label: "⏳超時短 (10分以内)", icon: "" },
 ];
 
+const SERVINGS_OPTIONS = [5, 4, 3, 2, 1];
+
 export default function RecipePage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,6 +48,7 @@ export default function RecipePage() {
   const [instruction, setInstruction] = useState("");
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [showConditions, setShowConditions] = useState(false);
+  const [servings, setServings] = useState<number | null>(null);
 
   useEffect(() => {
     fetchIngredients();
@@ -66,7 +69,20 @@ export default function RecipePage() {
       const res = await fetch("/api/inventory");
       const data = await res.json();
       if (Array.isArray(data)) {
-        setIngredients(data);
+        // 同じ名前の材料を重複排除（最初の1つだけ残す）
+        const seen = new Set<string>();
+        const deduplicated = data.filter((item: Ingredient) => {
+          const normalized = item.name.trim().toLowerCase();
+          if (seen.has(normalized)) return false;
+          seen.add(normalized);
+          return true;
+        });
+        setIngredients(deduplicated);
+
+        // サーバー側の重複も削除
+        if (deduplicated.length < data.length) {
+          fetch("/api/inventory/deduplicate", { method: "POST" }).catch(() => {});
+        }
       }
     } catch (e) {
       console.error(e);
@@ -96,7 +112,8 @@ export default function RecipePage() {
           ingredients: ingredientNames,
           pinnedIngredients: pinnedNames,
           conditions: selectedConditions,
-          instruction 
+          instruction,
+          servings: servings 
         })
       });
       const data = await res.json();
@@ -222,6 +239,23 @@ export default function RecipePage() {
                       </button>
                     );
                   })}
+                </div>
+
+                <div className={styles.servingsRow}>
+                  <label className={styles.servingsLabel}>
+                    <Users size={16} />
+                    🍽️ 分量（人数分）
+                  </label>
+                  <select
+                    className={styles.servingsSelect}
+                    value={servings ?? ""}
+                    onChange={(e) => setServings(e.target.value ? Number(e.target.value) : null)}
+                  >
+                    <option value="">指定なし</option>
+                    {SERVINGS_OPTIONS.map((n) => (
+                      <option key={n} value={n}>{n}人分</option>
+                    ))}
+                  </select>
                 </div>
               </motion.div>
             )}
