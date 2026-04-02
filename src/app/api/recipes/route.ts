@@ -4,6 +4,31 @@ import { getRecentRecipeNames } from '@/lib/db';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+const MODELS = ['models/gemini-2.5-flash', 'models/gemini-2.0-flash'];
+
+async function generateWithRetry(ai: any, config: any, maxRetries = 3): Promise<any> {
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await ai.models.generateContent({ ...config, model });
+        return response;
+      } catch (err: any) {
+        const status = err?.status || err?.httpStatusCode || err?.code;
+        if (status === 503 || status === 429 || status === 'UNAVAILABLE') {
+          const delay = Math.pow(2, attempt) * 1000;
+          console.warn(`Model ${model} attempt ${attempt + 1} failed (${status}), retrying in ${delay}ms...`);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+        throw err;
+      }
+    }
+    console.warn(`All retries exhausted for model ${model}, trying next model...`);
+  }
+  throw new Error('すべてのAIモデルが一時的に利用不可です。しばらく時間をおいてお試しください。');
+}
+
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -55,9 +80,8 @@ ${pinnedSection}${conditionsSection}${servingsSection}${instruction ? `\n【ユ�
   ]
 }`;
 
-    // Note: The @google/genai SDK (v1.x) uses 'config', not 'generationConfig'
-    const response = await (ai as any).models.generateContent({
-      model: 'models/gemini-flash-latest',
+    // Use retry logic with fallback models
+    const response = await generateWithRetry(ai, {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: { responseMimeType: 'application/json' }
     });
@@ -98,8 +122,9 @@ ${pinnedSection}${conditionsSection}${servingsSection}${instruction ? `\n【ユ�
     
   } catch (error: any) {
     console.error('Recipe Gen Error:', error);
-    if (error.status === 429) {
-      return NextResponse.json({ error: 'しばらく時間をおいてから再度お試しください (429)' }, { status: 429 });
+    const status = error?.status || error?.httpStatusCode || error?.code;
+    if (status === 429 || status === 503 || status === 'UNAVAILABLE') {
+      return NextResponse.json({ error: 'AIモデルが一時的に混雑しています。しばらく時間をおいてから再度お試しください。' }, { status: 503 });
     }
     return NextResponse.json({ error: `レシピの生成に失敗しました: ${error.message}` }, { status: 500 });
   }
