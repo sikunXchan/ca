@@ -13,17 +13,22 @@ async function generateWithRetry(ai: any, config: any, maxRetries = 3): Promise<
         const response = await ai.models.generateContent({ ...config, model });
         return response;
       } catch (err: any) {
-        const status = err?.status || err?.httpStatusCode || err?.code;
-        if (status === 503 || status === 429 || status === 'UNAVAILABLE') {
-          const delay = Math.pow(2, attempt) * 1000;
-          console.warn(`Model ${model} attempt ${attempt + 1} failed (${status}), retrying in ${delay}ms...`);
-          await new Promise(r => setTimeout(r, delay));
-          continue;
+        const status = err?.status ?? err?.httpStatusCode;
+        const code = err?.code;
+        const retryable = status === 503 || status === 429 || code === 'UNAVAILABLE' || code === 'RESOURCE_EXHAUSTED';
+        if (retryable) {
+          if (attempt < maxRetries - 1) {
+            const delay = Math.pow(2, attempt) * 1000;
+            console.warn(`Model ${model} attempt ${attempt + 1} failed (${status ?? code}), retrying in ${delay}ms...`);
+            await new Promise(r => setTimeout(r, delay));
+          } else {
+            console.warn(`All retries exhausted for model ${model}, trying next model...`);
+          }
+        } else {
+          throw err;
         }
-        throw err;
       }
     }
-    console.warn(`All retries exhausted for model ${model}, trying next model...`);
   }
   throw new Error('すべてのAIモデルが一時的に利用不可です。しばらく時間をおいてお試しください。');
 }
