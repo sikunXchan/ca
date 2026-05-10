@@ -30,10 +30,12 @@ const CATEGORY_ORDER = ['野菜', '肉', '魚介類', '乳製品・卵', '穀物
 export default function Home() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [newName, setNewName] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("その他");
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [pinningId, setPinningId] = useState<number | null>(null);
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchIngredients();
@@ -69,8 +71,13 @@ export default function Home() {
       const res = await fetch("/api/inventory", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: cleanName }),
+        body: JSON.stringify({ name: cleanName, category: selectedCategory }),
       });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || "追加に失敗しました");
+        return;
+      }
       const data = await res.json();
       if (data && data.id) {
         setIngredients([data, ...ingredients]);
@@ -135,6 +142,27 @@ export default function Home() {
     }
   };
 
+  const handleChangeCategory = async (item: Ingredient, newCategory: string) => {
+    setEditingCategoryId(null);
+    if (newCategory === item.category) return;
+
+    setIngredients(prev => prev.map(i => i.id === item.id ? { ...i, category: newCategory } : i));
+
+    try {
+      const res = await fetch(`/api/inventory/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: newCategory }),
+      });
+      if (!res.ok) {
+        setIngredients(prev => prev.map(i => i.id === item.id ? { ...i, category: item.category } : i));
+      }
+    } catch (e) {
+      console.error(e);
+      setIngredients(prev => prev.map(i => i.id === item.id ? { ...i, category: item.category } : i));
+    }
+  };
+
   const toggleCategory = (category: string) => {
     setCollapsedCategories(prev => {
       const next = new Set(prev);
@@ -167,23 +195,34 @@ export default function Home() {
     <div className={styles.container}>
       <h1 className={styles.title}>🧊 冷蔵庫の在庫</h1>
 
-      <form onSubmit={handleAdd} className={styles.addForm}>
-        <input
-          type="text"
-          placeholder="新しい食材を追加 (例: トマト)"
-          value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          disabled={adding}
-        />
-        <button type="submit" disabled={adding || !newName.trim()}>
-          {adding ? <Loader2 className="spinner" size={20} /> : <Plus size={20} />}
-          追加
-        </button>
+      <form onSubmit={handleAdd} className={styles.addFormWrapper}>
+        <div className={styles.addForm}>
+          <input
+            type="text"
+            placeholder="新しい食材を追加 (例: トマト)"
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            disabled={adding}
+          />
+          <button type="submit" disabled={adding || !newName.trim()}>
+            {adding ? <Loader2 className="spinner" size={20} /> : <Plus size={20} />}
+            追加
+          </button>
+        </div>
+        <div className={styles.categorySelectRow}>
+          <label className={styles.categorySelectLabel}>カテゴリ:</label>
+          <select
+            className={styles.categorySelect}
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            disabled={adding}
+          >
+            {CATEGORY_ORDER.map(cat => (
+              <option key={cat} value={cat}>{CATEGORY_ICONS[cat]} {cat}</option>
+            ))}
+          </select>
+        </div>
       </form>
-
-      {adding && (
-        <p className={styles.addingNote}>AIがカテゴリを判定中…</p>
-      )}
 
       {loading && (
         <div className="flex justify-center mt-4">
@@ -237,7 +276,32 @@ export default function Home() {
                           >
                             <div className={styles.nameSection}>
                               {item.is_pinned && <Pin size={14} fill="#ef4444" color="#ef4444" style={{ marginRight: 6 }} />}
-                              <span>{item.name}</span>
+                              <div>
+                                <span>{item.name}</span>
+                                <div className={styles.itemCategoryRow}>
+                                  {editingCategoryId === item.id ? (
+                                    <select
+                                      className={styles.inlineCategory}
+                                      value={item.category || 'その他'}
+                                      onChange={(e) => handleChangeCategory(item, e.target.value)}
+                                      onBlur={() => setEditingCategoryId(null)}
+                                      autoFocus
+                                    >
+                                      {CATEGORY_ORDER.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    <button
+                                      className={styles.categoryBadge}
+                                      onClick={() => setEditingCategoryId(item.id)}
+                                      title="カテゴリを変更"
+                                    >
+                                      {CATEGORY_ICONS[item.category || 'その他']} {item.category || 'その他'}
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                             <div className={styles.actions}>
                               <button

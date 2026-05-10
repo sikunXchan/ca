@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { deleteIngredient, togglePinIngredient } from '@/lib/db';
+import { deleteIngredient, togglePinIngredient, updateIngredientCategory } from '@/lib/db';
 
 export async function DELETE(
   req: Request,
@@ -26,8 +26,16 @@ export async function PATCH(
     const id = parseInt(idStr, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
-    const { is_pinned } = await req.json();
-    const updated = await togglePinIngredient(id, is_pinned);
+    const body = await req.json();
+
+    if ('category' in body) {
+      const updated = await updateIngredientCategory(id, body.category);
+      if (!updated) return NextResponse.json({ error: 'Failed to update category' }, { status: 500 });
+      return NextResponse.json(updated);
+    }
+
+    const updated = await togglePinIngredient(id, body.is_pinned);
+    if (!updated) return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
     return NextResponse.json(updated);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
