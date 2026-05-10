@@ -4,6 +4,7 @@ export type Ingredient = {
   id: number;
   name: string;
   is_pinned: boolean;
+  category: string;
   created_at: Date;
 };
 
@@ -14,6 +15,13 @@ export type ShoppingItem = {
   created_at: Date;
 };
 
+export type NutritionData = {
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+};
+
 export type SavedRecipe = {
   id: number;
   title: string;
@@ -22,6 +30,8 @@ export type SavedRecipe = {
   steps: string[];
   tips: string;
   image_url: string | null;
+  nutrition: NutritionData | null;
+  genre: string | null;
   saved_at: string;
 };
 
@@ -37,23 +47,22 @@ export async function getIngredients(): Promise<Ingredient[]> {
   }
 }
 
-export async function addIngredient(name: string): Promise<Ingredient | null> {
+export async function addIngredient(name: string, category: string = 'その他'): Promise<Ingredient | null> {
   try {
     const cleanName = name.trim();
-    // Check if exists first
     const { rows: existing } = await sql<Ingredient>`
-      SELECT * FROM ingredients 
+      SELECT * FROM ingredients
       WHERE LOWER(TRIM(name)) = LOWER(${cleanName})
       LIMIT 1
     `;
-    
+
     if (existing.length > 0) {
       return existing[0];
     }
 
     const { rows } = await sql<Ingredient>`
-      INSERT INTO ingredients (name, is_pinned)
-      VALUES (${cleanName}, false)
+      INSERT INTO ingredients (name, is_pinned, category)
+      VALUES (${cleanName}, false, ${category})
       RETURNING *
     `;
     return rows[0];
@@ -141,24 +150,20 @@ export async function deleteShoppingItem(id: number): Promise<boolean> {
 
 export async function completeShoppingItem(id: number): Promise<boolean> {
   try {
-    // 1. Get the item name
     const { rows } = await sql<{ name: string }>`SELECT name FROM shopping_list WHERE id = ${id}`;
     if (rows.length === 0) return false;
-    
+
     const name = rows[0].name;
     const cleanName = name.trim();
-    
-    // 2. Check if ingredient already exists (case insensitive)
+
     const { rows: existing } = await sql`SELECT id FROM ingredients WHERE LOWER(TRIM(name)) = LOWER(${cleanName})`;
-    
+
     if (existing.length === 0) {
-      // 3. Add to ingredients only if it doesn't exist
       await addIngredient(cleanName);
     }
-    
-    // 4. Always delete from shopping list
+
     await sql`DELETE FROM shopping_list WHERE id = ${id}`;
-    
+
     return true;
   } catch (error) {
     console.error('Failed to complete shopping item:', error);
@@ -168,10 +173,38 @@ export async function completeShoppingItem(id: number): Promise<boolean> {
 
 // --- Saved Recipes ---
 
-export async function getSavedRecipes(): Promise<SavedRecipe[]> {
+export async function getSavedRecipes(opts?: {
+  search?: string;
+  genre?: string;
+  timeMax?: number;
+}): Promise<SavedRecipe[]> {
   try {
     const { rows } = await sql<SavedRecipe>`SELECT * FROM recipes ORDER BY saved_at DESC`;
-    return rows;
+
+    let results = rows;
+
+    if (opts?.search) {
+      const q = opts.search.toLowerCase();
+      results = results.filter(r => {
+        const inTitle = r.title.toLowerCase().includes(q);
+        const inIngredients = Array.isArray(r.ingredients) && r.ingredients.some((i: any) => i.name?.toLowerCase().includes(q));
+        return inTitle || inIngredients;
+      });
+    }
+
+    if (opts?.genre) {
+      results = results.filter(r => r.genre === opts.genre);
+    }
+
+    if (opts?.timeMax) {
+      results = results.filter(r => {
+        const match = (r.time || '').match(/(\d+)/);
+        if (!match) return true;
+        return parseInt(match[1], 10) <= opts.timeMax!;
+      });
+    }
+
+    return results;
   } catch (error) {
     console.error('Failed to fetch saved recipes:', error);
     return [];
@@ -185,13 +218,26 @@ export async function saveRecipe(recipe: {
   steps: string[];
   tips: string;
   image_url: string | null;
+  nutrition?: NutritionData | null;
+  genre?: string | null;
 }): Promise<SavedRecipe | null> {
   try {
     const ingredientsJson = JSON.stringify(recipe.ingredients ?? []);
     const stepsJson = JSON.stringify(recipe.steps ?? []);
+    const nutritionJson = recipe.nutrition ? JSON.stringify(recipe.nutrition) : null;
+    const genre = recipe.genre ?? null;
     const { rows } = await sql<SavedRecipe>`
-      INSERT INTO recipes (title, time, ingredients, steps, tips, image_url)
-      VALUES (${recipe.title}, ${recipe.time}, ${ingredientsJson}::jsonb, ${stepsJson}::jsonb, ${recipe.tips}, ${recipe.image_url})
+      INSERT INTO recipes (title, time, ingredients, steps, tips, image_url, nutrition, genre)
+      VALUES (
+        ${recipe.title},
+        ${recipe.time},
+        ${ingredientsJson}::jsonb,
+        ${stepsJson}::jsonb,
+        ${recipe.tips},
+        ${recipe.image_url},
+        ${nutritionJson}::jsonb,
+        ${genre}
+      )
       RETURNING *
     `;
     return rows[0];
@@ -232,6 +278,21 @@ export async function getRecentRecipeNames(limit: number = 5): Promise<string[]>
     return rows.map(r => r.title);
   } catch (error) {
     console.error('Failed to fetch recent recipe names:', error);
+    return [];
+  }
+}
+
+export async function getRecentRecipesWithNutrition(limit: number = 15): Promise<SavedRecipe[]> {
+  try {
+    const { rows } = await sql<SavedRecipe>`
+      SELECT * FROM recipes
+      WHERE nutrition IS NOT NULL
+      ORDER BY saved_at DESC
+      LIMIT ${limit}
+    `;
+    return rows;
+  } catch (error) {
+    console.error('Failed to fetch recent recipes with nutrition:', error);
     return [];
   }
 }

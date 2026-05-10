@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback, Fragment } from "react";
-import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin, Users } from "lucide-react";
+import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin, Users, Lightbulb } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { CookingModeToggle } from "@/components/CookingModeToggle";
+import NutritionChart from "@/components/NutritionChart";
 import styles from "./Recipe.module.css";
 
 type Ingredient = {
@@ -18,14 +19,43 @@ type RecipeItem = {
   amount: string;
 };
 
+type NutritionData = {
+  calories: number;
+  protein_g: number;
+  carbs_g: number;
+  fat_g: number;
+};
+
 type Recipe = {
   title: string;
   time: string;
+  genre?: string;
   ingredients: RecipeItem[];
   steps: string[];
   tips: string;
   image_url: string | null;
+  nutrition?: NutritionData | null;
 };
+
+type CookingTip = {
+  category: string;
+  tip: string;
+};
+
+type HistoryRecipe = {
+  id: number;
+  title: string;
+  saved_at: string;
+  nutrition: NutritionData;
+};
+
+type AIModel = 'sikun-5.9' | 'lily-5.9' | 'lily-1.1';
+
+const MODEL_OPTIONS: { id: AIModel; label: string; desc: string }[] = [
+  { id: 'sikun-5.9', label: 'Sikun Cooking AI 5.9', desc: '在庫・カスタム指示ベース' },
+  { id: 'lily-5.9', label: 'Lily Cooking AI 5.9', desc: '栄養バランス考慮+グラフ' },
+  { id: 'lily-1.1', label: 'Lily Cooking AI + 1.1', desc: '履歴の栄養素からバランス調整' },
+];
 
 const CONDITION_OPTIONS = [
   { id: "low-cal", label: "低カロリー", icon: "🍃" },
@@ -37,10 +67,17 @@ const CONDITION_OPTIONS = [
 
 const SERVINGS_OPTIONS = [5, 4, 3, 2, 1];
 
+const TIP_CATEGORY_COLORS: Record<string, string> = {
+  '保存方法': '#20b2aa',
+  '調理のコツ': '#ff7849',
+  '栄養豆知識': '#8b5cf6',
+};
+
 export default function RecipePage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(false);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [cookingTips, setCookingTips] = useState<CookingTip[]>([]);
   const [errorMsg, setErrorMsg] = useState("");
   const [expandedIndex, setExpandedIndex] = useState<number>(-1);
   const [savedSet, setSavedSet] = useState<Set<number>>(new Set());
@@ -49,27 +86,40 @@ export default function RecipePage() {
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [showConditions, setShowConditions] = useState(false);
   const [servings, setServings] = useState<number | null>(null);
+  const [selectedModel, setSelectedModel] = useState<AIModel>('sikun-5.9');
+  const [showTips, setShowTips] = useState(false);
+
+  // Lily 1.1: history recipes with nutrition for picker
+  const [historyRecipes, setHistoryRecipes] = useState<HistoryRecipe[]>([]);
+  const [selectedHistoryIds, setSelectedHistoryIds] = useState<Set<number>>(new Set());
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   useEffect(() => {
     fetchIngredients();
-    
-    // Load last generated recipes from localStorage
     try {
+      const savedModel = localStorage.getItem("cooking_app_model") as AIModel | null;
+      if (savedModel) setSelectedModel(savedModel);
       const saved = localStorage.getItem("cooking_app_last_recipes");
-      if (saved) {
-        setRecipes(JSON.parse(saved));
-      }
+      if (saved) setRecipes(JSON.parse(saved));
+      const savedTips = localStorage.getItem("cooking_app_last_tips");
+      if (savedTips) setCookingTips(JSON.parse(savedTips));
     } catch (e) {
       console.error("Failed to load from localStorage", e);
     }
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("cooking_app_model", selectedModel);
+    if (selectedModel === 'lily-1.1') {
+      fetchHistoryWithNutrition();
+    }
+  }, [selectedModel]);
 
   const fetchIngredients = async () => {
     try {
       const res = await fetch("/api/inventory");
       const data = await res.json();
       if (Array.isArray(data)) {
-        // 同じ名前の材料を重複排除（最初の1つだけ残す）
         const seen = new Set<string>();
         const deduplicated = data.filter((item: Ingredient) => {
           const normalized = item.name.trim().toLowerCase();
@@ -78,8 +128,6 @@ export default function RecipePage() {
           return true;
         });
         setIngredients(deduplicated);
-
-        // サーバー側の重複も削除
         if (deduplicated.length < data.length) {
           fetch("/api/inventory/deduplicate", { method: "POST" }).catch(() => {});
         }
@@ -89,10 +137,32 @@ export default function RecipePage() {
     }
   };
 
+  const fetchHistoryWithNutrition = async () => {
+    setLoadingHistory(true);
+    try {
+      const res = await fetch("/api/saved-recipes/with-nutrition");
+      const data = await res.json();
+      if (Array.isArray(data)) setHistoryRecipes(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const toggleCondition = (label: string) => {
-    setSelectedConditions(prev => 
+    setSelectedConditions(prev =>
       prev.includes(label) ? prev.filter(c => c !== label) : [...prev, label]
     );
+  };
+
+  const toggleHistorySelection = (id: number) => {
+    setSelectedHistoryIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const generateRecipes = async () => {
@@ -100,35 +170,45 @@ export default function RecipePage() {
     setLoading(true);
     setErrorMsg("");
     setExpandedIndex(-1);
-    
+
     const ingredientNames = ingredients.map(i => i.name);
     const pinnedNames = ingredients.filter(i => i.is_pinned).map(i => i.name);
-    
+
+    const nutritionContext = selectedModel === 'lily-1.1'
+      ? historyRecipes
+          .filter(r => selectedHistoryIds.has(r.id))
+          .map(r => ({ title: r.title, nutrition: r.nutrition }))
+      : [];
+
     try {
-      const res = await fetch("/api/recipes", { 
+      const res = await fetch("/api/recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           ingredients: ingredientNames,
           pinnedIngredients: pinnedNames,
           conditions: selectedConditions,
           instruction,
-          servings: servings 
+          servings,
+          model: selectedModel,
+          nutritionContext,
         })
       });
       const data = await res.json();
-      
-      if (!res.ok) throw new Error(data.error || "生成に失敗しました");
-      
-      const newRecipes = data.recipes || [];
-      setRecipes(newRecipes);
-      
-      // Save to localStorage
-      localStorage.setItem("cooking_app_last_recipes", JSON.stringify(newRecipes));
-      
-      setSavedSet(new Set()); // Reset saved highlights for new results
 
-      // Celebration!
+      if (!res.ok) throw new Error(data.error || "生成に失敗しました");
+
+      const newRecipes = data.recipes || [];
+      const newTips: CookingTip[] = data.cooking_tips || [];
+      setRecipes(newRecipes);
+      setCookingTips(newTips);
+
+      localStorage.setItem("cooking_app_last_recipes", JSON.stringify(newRecipes));
+      localStorage.setItem("cooking_app_last_tips", JSON.stringify(newTips));
+
+      setSavedSet(new Set());
+      if (newTips.length > 0) setShowTips(true);
+
       confetti({
         particleCount: 150,
         spread: 70,
@@ -144,19 +224,16 @@ export default function RecipePage() {
   };
 
   const getRecipeIcon = (recipe: Recipe) => {
-    // 調理時間（文字列）から数字を抽出（例：「15分」→ 15）
     const timeStr = recipe.time || "";
     const match = timeStr.match(/(\d+)/);
-    const minutes = match ? parseInt(match[0], 10) : 10; // 数字が見つからない場合はデフォルトで main (10分以上扱い)
-    
-    // 9分以内なら sub.png、それ以外（10分以上）なら main.png
+    const minutes = match ? parseInt(match[0], 10) : 10;
     return minutes <= 9 ? "/sub.png" : "/main.png";
   };
 
   const handleSave = async (index: number) => {
     const recipe = recipes[index];
     if (!recipe || savedSet.has(index)) return;
-    
+
     setSavingIndex(index);
     try {
       const res = await fetch("/api/saved-recipes", {
@@ -169,9 +246,11 @@ export default function RecipePage() {
           steps: recipe.steps ?? [],
           tips: recipe.tips ?? '',
           image_url: recipe.image_url || null,
+          nutrition: recipe.nutrition ?? null,
+          genre: recipe.genre ?? null,
         }),
       });
-      
+
       if (res.ok) {
         setSavedSet(prev => new Set(prev).add(index));
       } else {
@@ -186,9 +265,11 @@ export default function RecipePage() {
     }
   };
 
-  const activeConditionsText = selectedConditions.length > 0 
-    ? ` (${selectedConditions.length}件選択中)` 
+  const activeConditionsText = selectedConditions.length > 0
+    ? ` (${selectedConditions.length}件選択中)`
     : "";
+
+  const isLilyModel = selectedModel === 'lily-5.9' || selectedModel === 'lily-1.1';
 
   return (
     <div className={styles.container}>
@@ -196,6 +277,53 @@ export default function RecipePage() {
         <h1 className={styles.title}>🍳 AIレシピ提案</h1>
         <CookingModeToggle />
       </div>
+
+      {/* Model Selector */}
+      <div className={styles.modelSelector}>
+        {MODEL_OPTIONS.map(opt => (
+          <button
+            key={opt.id}
+            className={`${styles.modelBtn} ${selectedModel === opt.id ? styles.modelBtnActive : ''}`}
+            onClick={() => setSelectedModel(opt.id)}
+          >
+            <span className={styles.modelName}>{opt.label}</span>
+            <span className={styles.modelDesc}>{opt.desc}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Lily 1.1: nutrition context picker */}
+      {selectedModel === 'lily-1.1' && (
+        <div className={styles.nutritionPicker}>
+          <p className={styles.nutritionPickerTitle}>
+            🥗 栄養バランスの参考にするレシピを選択 <span className={styles.optional}>（任意）</span>
+          </p>
+          {loadingHistory ? (
+            <div className={styles.nutritionPickerLoading}><Loader2 className="spinner" size={18} /> 読み込み中…</div>
+          ) : historyRecipes.length === 0 ? (
+            <p className={styles.nutritionPickerEmpty}>Lily Cooking AI 5.9以上で生成・保存したレシピがありません</p>
+          ) : (
+            <div className={styles.nutritionPickerList}>
+              {historyRecipes.map(r => (
+                <label key={r.id} className={`${styles.nutritionPickerItem} ${selectedHistoryIds.has(r.id) ? styles.nutritionPickerItemSelected : ''}`}>
+                  <input
+                    type="checkbox"
+                    checked={selectedHistoryIds.has(r.id)}
+                    onChange={() => toggleHistorySelection(r.id)}
+                    className={styles.nutritionPickerCheck}
+                  />
+                  <span className={styles.nutritionPickerLabel}>
+                    <span className={styles.nutritionPickerName}>{r.title}</span>
+                    <span className={styles.nutritionPickerMeta}>
+                      {r.nutrition.calories}kcal · P:{r.nutrition.protein_g}g · C:{r.nutrition.carbs_g}g · F:{r.nutrition.fat_g}g
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className={styles.inputSection}>
         <div className={styles.inventorySummary}>
@@ -206,19 +334,19 @@ export default function RecipePage() {
             </Fragment>
           )) : "なし"}
         </div>
-        
+
         <div className={styles.conditionsAccordion}>
-          <button 
-            className={styles.conditionsHeader} 
+          <button
+            className={styles.conditionsHeader}
             onClick={() => setShowConditions(!showConditions)}
           >
             <span>✨ 条件オプションを選択 {activeConditionsText}</span>
             {showConditions ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
           </button>
-          
+
           <AnimatePresence>
             {showConditions && (
-              <motion.div 
+              <motion.div
                 className={styles.conditionsContent}
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
@@ -275,7 +403,7 @@ export default function RecipePage() {
           className={styles.textarea}
         />
 
-        <button 
+        <button
           className={styles.generateBtn}
           onClick={generateRecipes}
           disabled={loading || ingredients.length === 0}
@@ -308,24 +436,27 @@ export default function RecipePage() {
           <div className={styles.resultsHeader}>
             <h2 className={styles.resultsTitle}>✨ 提案結果</h2>
           </div>
-          
+
           {recipes.map((recipe, index) => {
             const isExpanded = expandedIndex === index;
             const isSaved = savedSet.has(index);
             return (
               <div key={index} className={styles.recipeCard}>
                 <div className={styles.recipeHeader} onClick={() => setExpandedIndex(isExpanded ? -1 : index)}>
-                  <img 
-                    src={getRecipeIcon(recipe)} 
+                  <img
+                    src={getRecipeIcon(recipe)}
                     alt={recipe.title}
                     className={styles.recipeIcon}
                   />
-                  
+
                   <div className={styles.recipeTitleGroup}>
                     <h2 className={styles.recipeTitle}>{recipe.title}</h2>
                     <span className={styles.recipeTime}>⏱ {recipe.time}</span>
+                    {recipe.genre && (
+                      <span className={styles.genreBadge}>{recipe.genre}</span>
+                    )}
                   </div>
-                  
+
                   <div className={styles.recipeActions}>
                     <button
                       className={isSaved ? styles.savedBtn : styles.saveBtn}
@@ -335,28 +466,27 @@ export default function RecipePage() {
                       {savingIndex === index ? (
                         <Loader2 className="spinner" size={14} />
                       ) : isSaved ? (
-                        <>
-                          <Check size={14} />
-                          <span>保存済み</span>
-                        </>
+                        <><Check size={14} /><span>保存済み</span></>
                       ) : (
-                        <>
-                          <Bookmark size={14} />
-                          <span>保存</span>
-                        </>
+                        <><Bookmark size={14} /><span>保存</span></>
                       )}
                     </button>
-                    
-                    <button
-                      className={styles.chevronBtn}
-                    >
+
+                    <button className={styles.chevronBtn}>
                       {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                     </button>
                   </div>
                 </div>
-                
+
                 {isExpanded && (
                   <div className={styles.recipeBody}>
+                    {isLilyModel && recipe.nutrition && (
+                      <div className={styles.nutritionSection}>
+                        <h3 className={styles.nutritionTitle}>📊 栄養バランス</h3>
+                        <NutritionChart nutrition={recipe.nutrition} />
+                      </div>
+                    )}
+
                     <div className={styles.section}>
                       <h3>材料・調味料</h3>
                       <ul className={styles.ingredientList}>
@@ -368,7 +498,7 @@ export default function RecipePage() {
                         ))}
                       </ul>
                     </div>
-                    
+
                     <div className={styles.section}>
                       <h3>作り方</h3>
                       <ol className={styles.stepList}>
@@ -388,6 +518,46 @@ export default function RecipePage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Cooking Tips Section */}
+      {!loading && cookingTips.length > 0 && (
+        <div className={styles.cookingTipsSection}>
+          <button
+            className={styles.cookingTipsHeader}
+            onClick={() => setShowTips(!showTips)}
+          >
+            <span className={styles.cookingTipsTitle}>
+              <Lightbulb size={18} color="#8b5cf6" />
+              料理のコツ &amp; 豆知識
+            </span>
+            {showTips ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+          </button>
+
+          <AnimatePresence>
+            {showTips && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className={styles.cookingTipsList}
+              >
+                {cookingTips.map((tip, i) => (
+                  <div key={i} className={styles.cookingTipItem}>
+                    <span
+                      className={styles.tipCategoryBadge}
+                      style={{ background: `${TIP_CATEGORY_COLORS[tip.category] || '#8b5cf6'}20`, color: TIP_CATEGORY_COLORS[tip.category] || '#8b5cf6' }}
+                    >
+                      {tip.category}
+                    </span>
+                    <p className={styles.tipText}>{tip.tip}</p>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
     </div>
