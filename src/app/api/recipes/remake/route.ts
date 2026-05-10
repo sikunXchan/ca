@@ -55,12 +55,14 @@ export async function POST(req: Request) {
 {
   "title": "リメイク後の料理名",
   "time": "調理時間目安（例：15分）",
+  "genre": "和食",
   "ingredients": [
     { "name": "具材名", "amount": "分量" }
   ],
   "steps": ["手順1", "手順2..."],
   "tips": "リメイクのポイント"
-}`;
+}
+genreは「和食」「洋食」「中華」「アジア料理」「イタリアン」「フレンチ」「その他」から選んでください。`;
 
     const response = await generateWithRetry(ai, {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],

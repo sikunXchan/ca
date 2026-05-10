@@ -10,7 +10,22 @@ type Ingredient = {
   id: number;
   name: string;
   is_pinned: boolean;
+  category: string;
 };
+
+const CATEGORY_ICONS: Record<string, string> = {
+  '野菜': '🥦',
+  '肉': '🥩',
+  '魚介類': '🐟',
+  '乳製品・卵': '🥚',
+  '穀物・パン': '🌾',
+  '調味料': '🧂',
+  '果物': '🍎',
+  '豆類': '🫘',
+  'その他': '🍽️',
+};
+
+const CATEGORY_ORDER = ['野菜', '肉', '魚介類', '乳製品・卵', '穀物・パン', '豆類', '果物', '調味料', 'その他'];
 
 export default function Home() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -18,6 +33,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
   const [pinningId, setPinningId] = useState<number | null>(null);
+  const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchIngredients();
@@ -43,12 +59,11 @@ export default function Home() {
     const cleanName = newName.trim();
     if (!cleanName) return;
 
-    // Check for duplicates
     if (ingredients.some(i => i.name.toLowerCase() === cleanName.toLowerCase())) {
       alert("その食材はすでに在庫にあります。");
       return;
     }
-    
+
     setAdding(true);
     try {
       const res = await fetch("/api/inventory", {
@@ -70,7 +85,6 @@ export default function Home() {
   };
 
   const handleDelete = async (id: number) => {
-    // Optimistic update: remove immediately so the animation plays at once
     const previous = ingredients;
     setIngredients(prev => prev.filter(i => i.id !== id));
     try {
@@ -89,8 +103,7 @@ export default function Home() {
   const handleTogglePin = async (item: Ingredient) => {
     setPinningId(item.id);
     const pinState = !item.is_pinned;
-    
-    // Star particle effect on pin
+
     if (pinState) {
       confetti({
         particleCount: 40,
@@ -101,10 +114,8 @@ export default function Home() {
       });
     }
 
-    // Optimistic update
     setIngredients(prev => {
       const next = prev.map(i => i.id === item.id ? { ...i, is_pinned: pinState } : i);
-      // Sort: pinned first
       return [...next].sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0));
     });
 
@@ -115,26 +126,51 @@ export default function Home() {
         body: JSON.stringify({ is_pinned: pinState }),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed");
-      }
+      if (!res.ok) throw new Error("Failed");
     } catch (e) {
       console.error(e);
-      // Revert optimistic update on error
       fetchIngredients();
     } finally {
       setPinningId(null);
     }
   };
 
+  const toggleCategory = (category: string) => {
+    setCollapsedCategories(prev => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  };
+
+  // Group ingredients by category
+  const grouped = CATEGORY_ORDER.reduce<Record<string, Ingredient[]>>((acc, cat) => {
+    const items = ingredients.filter(i => (i.category || 'その他') === cat);
+    if (items.length > 0) acc[cat] = items;
+    return acc;
+  }, {});
+
+  // Uncategorized that don't match known order
+  const knownCategories = new Set(CATEGORY_ORDER);
+  ingredients.forEach(i => {
+    const cat = i.category || 'その他';
+    if (!knownCategories.has(cat)) {
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(i);
+    }
+  });
+
+  const hasIngredients = ingredients.length > 0;
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>🧊 冷蔵庫の在庫</h1>
 
       <form onSubmit={handleAdd} className={styles.addForm}>
-        <input 
-          type="text" 
-          placeholder="新しい食材を追加 (例: トマト)" 
+        <input
+          type="text"
+          placeholder="新しい食材を追加 (例: トマト)"
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           disabled={adding}
@@ -145,70 +181,102 @@ export default function Home() {
         </button>
       </form>
 
+      {adding && (
+        <p className={styles.addingNote}>AIがカテゴリを判定中…</p>
+      )}
+
       {loading && (
         <div className="flex justify-center mt-4">
           <Loader2 className="spinner" size={32} color="var(--primary)" />
         </div>
       )}
 
-      {!loading && (
-        <>
-          <ul className={styles.list}>
-            <AnimatePresence initial={false}>
-              {ingredients.map((item) => (
-                <motion.li 
-                  key={item.id} 
-                  layout
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  transition={{ 
-                    type: "spring", 
-                    stiffness: 500, 
-                    damping: 30,
-                    opacity: { duration: 0.2 } 
-                  }}
-                  className={`${styles.listItem} ${item.is_pinned ? styles.pinned : ""}`}
+      {!loading && hasIngredients && (
+        <div className={styles.categoryGroups}>
+          {Object.entries(grouped).map(([category, items]) => {
+            const isCollapsed = collapsedCategories.has(category);
+            const icon = CATEGORY_ICONS[category] || '🍽️';
+            return (
+              <div key={category} className={styles.categoryGroup}>
+                <button
+                  className={styles.categoryHeader}
+                  onClick={() => toggleCategory(category)}
                 >
-                  <div className={styles.nameSection}>
-                    {item.is_pinned && <Pin size={14} fill="#ef4444" color="#ef4444" style={{ marginRight: 6 }} />}
-                    <span>{item.name}</span>
-                  </div>
-                  <div className={styles.actions}>
-                    <button
-                      className={`${styles.pinBtn} ${item.is_pinned ? styles.pinActive : ""}`}
-                      onClick={() => handleTogglePin(item)}
-                      disabled={pinningId === item.id}
-                      title={item.is_pinned ? "ピンを外す" : "ピン留め（必須指定）"}
-                    >
-                      {pinningId === item.id ? (
-                        <Loader2 className="spinner" size={20} strokeWidth={2.5} />
-                      ) : (
-                        <span style={{ fontSize: '20px' }}>📍</span>
-                      )}
-                    </button>
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={() => handleDelete(item.id)}
-                      aria-label="削除"
-                    >
-                      <Trash2 size={22} strokeWidth={2.5} color="#ef4444" />
-                    </button>
-                  </div>
-                </motion.li>
-              ))}
-            </AnimatePresence>
-          </ul>
+                  <span className={styles.categoryTitle}>
+                    <span>{icon}</span>
+                    <span>{category}</span>
+                    <span className={styles.categoryCount}>{items.length}</span>
+                  </span>
+                  <span className={styles.categoryChevron}>{isCollapsed ? '›' : '⌄'}</span>
+                </button>
 
-          {ingredients.length === 0 && (
-            <div
-              style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}
-            >
-              <ShoppingBag size={48} style={{ marginBottom: 12, opacity: 0.5 }} />
-              <p>在庫がありません。追加してください。</p>
-            </div>
-          )}
-        </>
+                <AnimatePresence initial={false}>
+                  {!isCollapsed && (
+                    <motion.ul
+                      className={styles.list}
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <AnimatePresence initial={false}>
+                        {items.map((item) => (
+                          <motion.li
+                            key={item.id}
+                            layout
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 500,
+                              damping: 30,
+                              opacity: { duration: 0.2 }
+                            }}
+                            className={`${styles.listItem} ${item.is_pinned ? styles.pinned : ""}`}
+                          >
+                            <div className={styles.nameSection}>
+                              {item.is_pinned && <Pin size={14} fill="#ef4444" color="#ef4444" style={{ marginRight: 6 }} />}
+                              <span>{item.name}</span>
+                            </div>
+                            <div className={styles.actions}>
+                              <button
+                                className={`${styles.pinBtn} ${item.is_pinned ? styles.pinActive : ""}`}
+                                onClick={() => handleTogglePin(item)}
+                                disabled={pinningId === item.id}
+                                title={item.is_pinned ? "ピンを外す" : "ピン留め（必須指定）"}
+                              >
+                                {pinningId === item.id ? (
+                                  <Loader2 className="spinner" size={20} strokeWidth={2.5} />
+                                ) : (
+                                  <span style={{ fontSize: '20px' }}>📍</span>
+                                )}
+                              </button>
+                              <button
+                                className={styles.deleteBtn}
+                                onClick={() => handleDelete(item.id)}
+                                aria-label="削除"
+                              >
+                                <Trash2 size={22} strokeWidth={2.5} color="#ef4444" />
+                              </button>
+                            </div>
+                          </motion.li>
+                        ))}
+                      </AnimatePresence>
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {!loading && !hasIngredients && (
+        <div style={{ textAlign: "center", padding: "40px 0", color: "var(--text-muted)" }}>
+          <ShoppingBag size={48} style={{ marginBottom: 12, opacity: 0.5 }} />
+          <p>在庫がありません。追加してください。</p>
+        </div>
       )}
     </div>
   );
