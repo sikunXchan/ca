@@ -163,7 +163,7 @@ export default function HistoryPage() {
       const saveRes = await fetch("/api/saved-recipes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(remakeData),
+        body: JSON.stringify({ ...remakeData, image_url: null }),
       });
 
       if (saveRes.ok) {

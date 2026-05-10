@@ -112,6 +112,19 @@ export async function togglePinIngredient(id: number, is_pinned: boolean): Promi
   }
 }
 
+export async function updateIngredientCategory(id: number, category: string): Promise<Ingredient | null> {
+  try {
+    const { rows } = await sql<Ingredient>`
+      UPDATE ingredients SET category = ${category} WHERE id = ${id}
+      RETURNING *
+    `;
+    return rows[0] || null;
+  } catch (error) {
+    console.error('Failed to update ingredient category:', error);
+    return null;
+  }
+}
+
 // --- Shopping List ---
 
 export async function getShoppingList(): Promise<ShoppingItem[]> {

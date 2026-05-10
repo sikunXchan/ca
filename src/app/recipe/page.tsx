@@ -245,7 +245,7 @@ export default function RecipePage() {
           ingredients: recipe.ingredients ?? [],
           steps: recipe.steps ?? [],
           tips: recipe.tips ?? '',
-          image_url: recipe.image_url || null,
+          image_url: null,
           nutrition: recipe.nutrition ?? null,
           genre: recipe.genre ?? null,
         }),
