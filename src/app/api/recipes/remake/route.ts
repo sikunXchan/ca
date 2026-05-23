@@ -66,32 +66,16 @@ genreは「和食」「洋食」「中華」「アジア料理」「イタリア
 
     const response = await generateWithRetry(ai, {
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
-      config: { responseMimeType: 'application/json' }
+      config: {
+        responseMimeType: 'application/json',
+        thinkingConfig: { thinkingBudget: 0 },
+      }
     });
 
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text || response.text || '';
     if (!text) throw new Error('AI output was empty');
-    
-    const json = JSON.parse(text);
 
-    // Image generation for remake
-    try {
-      const imgResponse = await (ai as any).models.generateImages({
-        model: 'models/imagen-4.0-generate-001',
-        prompt: `A professional food photography of ${json.title}, a creative leftover remake dish. High resolution, appetizing.`,
-        config: { numberOfImages: 1 },
-      });
-      
-      if (imgResponse.generatedImages && imgResponse.generatedImages.length > 0) {
-        const imgBytes = imgResponse.generatedImages[0].image?.imageBytes;
-        if (imgBytes) {
-          json.image_url = `data:image/png;base64,${imgBytes}`;
-        }
-      }
-    } catch (imgError) {
-      console.error('Remake image generation failed', imgError);
-      json.image_url = null;
-    }
+    const json = JSON.parse(text);
 
     return NextResponse.json(json);
     
