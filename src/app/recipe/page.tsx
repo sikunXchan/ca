@@ -63,7 +63,6 @@ const CONDITION_OPTIONS = [
   { id: "gentle", label: "🤒お腹にやさしい", icon: "" },
   { id: "protein", label: "💪ガッツリ高タンパク", icon: "" },
   { id: "fast", label: "⏳超時短 (10分以内)", icon: "" },
-  { id: "rich-taste", label: "🍖しっかり濃いめの味付け", icon: "" },
 ];
 
 const SERVINGS_OPTIONS = [5, 4, 3, 2, 1];
