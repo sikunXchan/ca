@@ -91,14 +91,17 @@ export async function POST(req: Request) {
     const nutritionJsonSchema = isLily ? `
       "nutrition": { "calories": 450, "protein_g": 30, "carbs_g": 45, "fat_g": 12 },` : '';
 
+    const seasoningSection = `\n【調味料・味付けの前提】\n塩・こしょう・砂糖・醤油・味噌・みりん・酒・酢・サラダ油・ごま油・バター・だし（顆粒和風だし/コンソメ/鶏がらスープの素）・ケチャップ・マヨネーズ・にんにく・しょうがなどの基本的な調味料は「常備されている」前提で自由に使用してください。これらは在庫食材に含まれていなくても構いません。\n`;
+
     const prompt = `あなたはプロの料理アシスタントです。以下の内容をもとに、消費できる最高のレシピを複数提案してください。
 【現在の在庫食材】
 ${ingredients.join(', ')}
-${pinnedSection}${conditionsSection}${servingsSection}${instruction ? `\n【ユーザーからのカスタム指示】\n${instruction}\n` : ''}${historyNote}${nutritionBalanceSection}${nutritionContextSection}
+${seasoningSection}${pinnedSection}${conditionsSection}${servingsSection}${instruction ? `\n【ユーザーからのカスタム指示】\n${instruction}\n` : ''}${historyNote}${nutritionBalanceSection}${nutritionContextSection}
 【重要・厳守事項】
 1. ピン留め食材がある場合、それらを「主役」として扱うか、レシピに「必ず」組み込んでください。
 2. 調理条件（低カロリー、時短など）が指定されている場合、必ずその条件を満たすレシピにしてください。
-3. 以下のJSON構造で、"recipes"配列の中に複数のレシピデータを格納して返してください。また"cooking_tips"配列に食材に関連するコツ・保存方法・栄養豆知識を3件含めてください。これ以外のテキストは一切含めないでください。
+3. 味付けは「ぼやけない・しっかりした美味しさ」を最優先してください。基本調味料を積極的に使い、すべての調味料について分量を「大さじ・小さじ・g」など具体的な数値で必ず明記してください（「適量」「少々」は塩・こしょうなど一部の仕上げ調味料のみ許可）。各レシピが料理として味が決まる、満足できる仕上がりになるよう設計してください。
+4. 以下のJSON構造で、"recipes"配列の中に複数のレシピデータを格納して返してください。また"cooking_tips"配列に食材に関連するコツ・保存方法・栄養豆知識を3件含めてください。これ以外のテキストは一切含めないでください。
 {
   "recipes": [
     {
@@ -106,7 +109,7 @@ ${pinnedSection}${conditionsSection}${servingsSection}${instruction ? `\n【ユ�
       "time": "調理時間目安（例：15分）",
       "genre": "和食",
       "ingredients": [
-        { "name": "使用する具材1", "amount": "分量の目安（例：200g、1/2個など）" }
+        { "name": "使用する具材または調味料", "amount": "分量の目安（例：鶏もも肉200g、玉ねぎ1/2個、醤油 大さじ2、砂糖 小さじ1など）" }
       ],
       "steps": ["手順1", "手順2", "手順3..."],
       "tips": "調理のコツ・アドバイス"${nutritionJsonSchema}
