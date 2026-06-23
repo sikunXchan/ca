@@ -4,7 +4,7 @@ import { getRecentRecipeNames } from '@/lib/db';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const MODELS = ['models/gemini-2.5-flash', 'models/gemini-2.0-flash'];
+const MODELS = ['models/gemini-3.5-flash', 'models/gemini-2.0-flash'];
 
 async function generateWithRetry(ai: any, config: any, maxRetries = 3): Promise<any> {
   for (const model of MODELS) {
