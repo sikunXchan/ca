@@ -13,7 +13,6 @@ import {
   Play,
   Pause,
   PartyPopper,
-  ImagePlus,
   RefreshCw,
   Loader2,
 } from "lucide-react";
@@ -23,6 +22,7 @@ type Props = {
   title: string;
   steps: string[];
   ingredients?: string[];
+  autoGenerateImages?: boolean;
   onClose: () => void;
 };
 
@@ -55,7 +55,13 @@ const stepVariants = {
   exit: (dir: number) => ({ x: dir >= 0 ? -40 : 40, opacity: 0 }),
 };
 
-export default function CookingSession({ title, steps, ingredients, onClose }: Props) {
+export default function CookingSession({
+  title,
+  steps,
+  ingredients,
+  autoGenerateImages = false,
+  onClose,
+}: Props) {
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [finished, setFinished] = useState(false);
@@ -63,7 +69,7 @@ export default function CookingSession({ title, steps, ingredients, onClose }: P
   const [timerRunning, setTimerRunning] = useState(false);
   const [timerStepIndex, setTimerStepIndex] = useState(index);
   const [stepImages, setStepImages] = useState<Record<number, string>>({});
-  const [imageLoadingIndex, setImageLoadingIndex] = useState<number | null>(null);
+  const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
   const [imageErrors, setImageErrors] = useState<Record<number, string>>({});
 
   const nodeRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -128,7 +134,7 @@ export default function CookingSession({ title, steps, ingredients, onClose }: P
 
   const generateStepImage = useCallback(
     async (i: number) => {
-      setImageLoadingIndex(i);
+      setImageLoading((prev) => ({ ...prev, [i]: true }));
       setImageErrors((prev) => {
         const next = { ...prev };
         delete next[i];
@@ -147,10 +153,31 @@ export default function CookingSession({ title, steps, ingredients, onClose }: P
         const message = err instanceof Error ? err.message : "画像の生成に失敗しました";
         setImageErrors((prev) => ({ ...prev, [i]: message }));
       } finally {
-        setImageLoadingIndex(null);
+        setImageLoading((prev) => ({ ...prev, [i]: false }));
       }
     },
     [title, steps, ingredients]
+  );
+
+  // α mode: generate every step's image up front, one at a time
+  useEffect(() => {
+    if (!autoGenerateImages) return;
+    let cancelled = false;
+    (async () => {
+      for (let i = 0; i < steps.length; i++) {
+        if (cancelled) return;
+        await generateStepImage(i);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoGenerateImages]);
+
+  const generatedImageCount = useMemo(
+    () => steps.filter((_, i) => stepImages[i]).length,
+    [steps, stepImages]
   );
 
   // Keyboard support (desktop testing / accessibility)
@@ -205,7 +232,14 @@ export default function CookingSession({ title, steps, ingredients, onClose }: P
       exit={{ opacity: 0 }}
     >
       <div className={styles.header}>
-        <div className={styles.headerTitle}>{title}</div>
+        <div className={styles.headerText}>
+          <div className={styles.headerTitle}>{title}</div>
+          {autoGenerateImages && (
+            <div className={styles.headerSubtitle}>
+              画像を準備中 {generatedImageCount}/{total}
+            </div>
+          )}
+        </div>
         <button className={styles.closeBtn} onClick={onClose} aria-label="閉じる">
           <X size={22} />
         </button>
@@ -286,49 +320,47 @@ export default function CookingSession({ title, steps, ingredients, onClose }: P
                 </div>
               )}
 
-              <div className={`${styles.imageBox} ${styles.noTap}`}>
-                {stepImages[index] ? (
-                  <div className={styles.imageWrap}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={stepImages[index]} alt={`STEP ${index + 1}`} className={styles.stepImage} />
+              {autoGenerateImages && (
+                <div className={`${styles.imageBox} ${styles.noTap}`}>
+                  {stepImages[index] ? (
+                    <div className={styles.imageWrap}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={stepImages[index]} alt={`STEP ${index + 1}`} className={styles.stepImage} />
+                      <button
+                        className={styles.imageRegenBtn}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          generateStepImage(index);
+                        }}
+                        disabled={imageLoading[index]}
+                        title="画像を再生成"
+                      >
+                        {imageLoading[index] ? (
+                          <Loader2 className="spinner" size={14} />
+                        ) : (
+                          <RefreshCw size={14} />
+                        )}
+                      </button>
+                    </div>
+                  ) : imageLoading[index] ? (
+                    <div className={styles.imagePlaceholder}>
+                      <Loader2 className="spinner" size={20} />
+                      <span>画像を生成中...</span>
+                    </div>
+                  ) : imageErrors[index] ? (
                     <button
-                      className={styles.imageRegenBtn}
+                      className={styles.imageRetryBtn}
                       onClick={(e) => {
                         e.stopPropagation();
                         generateStepImage(index);
                       }}
-                      disabled={imageLoadingIndex === index}
-                      title="画像を再生成"
                     >
-                      {imageLoadingIndex === index ? (
-                        <Loader2 className="spinner" size={14} />
-                      ) : (
-                        <RefreshCw size={14} />
-                      )}
+                      <RefreshCw size={14} /> 再試行
                     </button>
-                  </div>
-                ) : (
-                  <button
-                    className={styles.imageGenBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      generateStepImage(index);
-                    }}
-                    disabled={imageLoadingIndex === index}
-                  >
-                    {imageLoadingIndex === index ? (
-                      <>
-                        <Loader2 className="spinner" size={16} /> 画像を生成中...
-                      </>
-                    ) : (
-                      <>
-                        <ImagePlus size={16} /> 画像を生成
-                      </>
-                    )}
-                  </button>
-                )}
-                {imageErrors[index] && <p className={styles.imageError}>{imageErrors[index]}</p>}
-              </div>
+                  ) : null}
+                  {imageErrors[index] && <p className={styles.imageError}>{imageErrors[index]}</p>}
+                </div>
+              )}
 
               <p className={styles.stepText}>{steps[index]}</p>
 
