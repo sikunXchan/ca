@@ -17,6 +17,11 @@
   flex-shrink: 0;
 }
 
+.headerText {
+  min-width: 0;
+  flex: 1;
+}
+
 .headerTitle {
   font-size: 15px;
   font-weight: 700;
@@ -25,6 +30,13 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.headerSubtitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b5cf6;
+  margin-top: 2px;
 }
 
 .closeBtn {
@@ -213,7 +225,22 @@
   transform: none;
 }
 
-.imageGenBtn {
+.imagePlaceholder {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #a8a29e;
+}
+
+.imageRetryBtn {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -225,7 +252,7 @@
   box-shadow: none;
 }
 
-.imageGenBtn:hover {
+.imageRetryBtn:hover {
   background: rgba(255, 255, 255, 0.16);
   box-shadow: none;
   transform: none;

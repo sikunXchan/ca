@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, Fragment } from "react";
-import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin, Users, Lightbulb, PlayCircle } from "lucide-react";
+import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin, Users, Lightbulb, PlayCircle, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { CookingModeToggle } from "@/components/CookingModeToggle";
@@ -90,6 +90,7 @@ export default function RecipePage() {
   const [selectedModel, setSelectedModel] = useState<AIModel>('sikun-5.9');
   const [showTips, setShowTips] = useState(false);
   const [cookingRecipeIndex, setCookingRecipeIndex] = useState<number | null>(null);
+  const [cookingAutoImages, setCookingAutoImages] = useState(false);
 
   // Lily 1.1: history recipes with nutrition for picker
   const [historyRecipes, setHistoryRecipes] = useState<HistoryRecipe[]>([]);
@@ -504,13 +505,22 @@ export default function RecipePage() {
                     <div className={styles.section}>
                       <div className={styles.stepsSectionHeader}>
                         <h3>作り方</h3>
-                        <button
-                          className={styles.startCookingBtn}
-                          onClick={(e) => { e.stopPropagation(); setCookingRecipeIndex(index); }}
-                        >
-                          <PlayCircle size={16} />
-                          タイムラインで調理開始
-                        </button>
+                        <div className={styles.stepsActionsRow}>
+                          <button
+                            className={styles.startCookingBtn}
+                            onClick={(e) => { e.stopPropagation(); setCookingRecipeIndex(index); setCookingAutoImages(false); }}
+                          >
+                            <PlayCircle size={16} />
+                            タイムラインで調理
+                          </button>
+                          <button
+                            className={styles.startCookingAlphaBtn}
+                            onClick={(e) => { e.stopPropagation(); setCookingRecipeIndex(index); setCookingAutoImages(true); }}
+                          >
+                            <Sparkles size={16} />
+                            タイムラインで調理α
+                          </button>
+                        </div>
                       </div>
                       <ol className={styles.stepList}>
                         {recipe.steps.map((step, i) => (
@@ -578,6 +588,7 @@ export default function RecipePage() {
             title={recipes[cookingRecipeIndex].title}
             steps={recipes[cookingRecipeIndex].steps}
             ingredients={recipes[cookingRecipeIndex].ingredients.map((i) => i.name)}
+            autoGenerateImages={cookingAutoImages}
             onClose={() => setCookingRecipeIndex(null)}
           />
         )}
