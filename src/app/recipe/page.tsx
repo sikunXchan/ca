@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback, Fragment } from "react";
-import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin, Users, Lightbulb } from "lucide-react";
+import { ChefHat, Loader2, ChevronDown, ChevronUp, Bookmark, Check, Utensils, Pin, Users, Lightbulb, PlayCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { CookingModeToggle } from "@/components/CookingModeToggle";
 import NutritionChart from "@/components/NutritionChart";
+import CookingSession from "@/components/CookingSession";
 import styles from "./Recipe.module.css";
 
 type Ingredient = {
@@ -88,6 +89,7 @@ export default function RecipePage() {
   const [servings, setServings] = useState<number | null>(null);
   const [selectedModel, setSelectedModel] = useState<AIModel>('sikun-5.9');
   const [showTips, setShowTips] = useState(false);
+  const [cookingRecipeIndex, setCookingRecipeIndex] = useState<number | null>(null);
 
   // Lily 1.1: history recipes with nutrition for picker
   const [historyRecipes, setHistoryRecipes] = useState<HistoryRecipe[]>([]);
@@ -500,7 +502,16 @@ export default function RecipePage() {
                     </div>
 
                     <div className={styles.section}>
-                      <h3>作り方</h3>
+                      <div className={styles.stepsSectionHeader}>
+                        <h3>作り方</h3>
+                        <button
+                          className={styles.startCookingBtn}
+                          onClick={(e) => { e.stopPropagation(); setCookingRecipeIndex(index); }}
+                        >
+                          <PlayCircle size={16} />
+                          タイムラインで調理開始
+                        </button>
+                      </div>
                       <ol className={styles.stepList}>
                         {recipe.steps.map((step, i) => (
                           <li key={i}>{step}</li>
@@ -560,6 +571,16 @@ export default function RecipePage() {
           </AnimatePresence>
         </div>
       )}
+
+      <AnimatePresence>
+        {cookingRecipeIndex !== null && recipes[cookingRecipeIndex] && (
+          <CookingSession
+            title={recipes[cookingRecipeIndex].title}
+            steps={recipes[cookingRecipeIndex].steps}
+            onClose={() => setCookingRecipeIndex(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
