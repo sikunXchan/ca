@@ -577,6 +577,7 @@ export default function RecipePage() {
           <CookingSession
             title={recipes[cookingRecipeIndex].title}
             steps={recipes[cookingRecipeIndex].steps}
+            ingredients={recipes[cookingRecipeIndex].ingredients.map((i) => i.name)}
             onClose={() => setCookingRecipeIndex(null)}
           />
         )}
