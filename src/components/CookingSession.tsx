@@ -15,13 +15,19 @@ import {
   PartyPopper,
   RefreshCw,
   Loader2,
+  ClipboardList,
 } from "lucide-react";
 import styles from "./CookingSession.module.css";
+
+type IngredientItem = {
+  name: string;
+  amount: string;
+};
 
 type Props = {
   title: string;
   steps: string[];
-  ingredients?: string[];
+  ingredients?: IngredientItem[];
   autoGenerateImages?: boolean;
   onClose: () => void;
 };
@@ -71,8 +77,10 @@ export default function CookingSession({
   const [stepImages, setStepImages] = useState<Record<number, string>>({});
   const [imageLoading, setImageLoading] = useState<Record<number, boolean>>({});
   const [imageErrors, setImageErrors] = useState<Record<number, string>>({});
+  const [showIngredients, setShowIngredients] = useState(false);
 
   const nodeRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const ingredientNames = useMemo(() => ingredients?.map((i) => i.name), [ingredients]);
 
   const metas = useMemo(() => steps.map(parseStepMeta), [steps]);
   const total = steps.length;
@@ -144,7 +152,7 @@ export default function CookingSession({
         const res = await fetch("/api/recipes/step-image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title, step: steps[i], ingredients }),
+          body: JSON.stringify({ title, step: steps[i], ingredients: ingredientNames }),
         });
         const data = await res.json();
         if (!res.ok || !data.image) throw new Error(data.error || "画像の生成に失敗しました");
@@ -156,7 +164,7 @@ export default function CookingSession({
         setImageLoading((prev) => ({ ...prev, [i]: false }));
       }
     },
-    [title, steps, ingredients]
+    [title, steps, ingredientNames]
   );
 
   // α mode: generate every step's image up front, one at a time
@@ -240,10 +248,56 @@ export default function CookingSession({
             </div>
           )}
         </div>
+        {ingredients && ingredients.length > 0 && (
+          <button className={styles.ingredientsBtn} onClick={() => setShowIngredients(true)}>
+            <ClipboardList size={16} />
+            材料
+          </button>
+        )}
         <button className={styles.closeBtn} onClick={onClose} aria-label="閉じる">
           <X size={22} />
         </button>
       </div>
+
+      <AnimatePresence>
+        {showIngredients && (
+          <motion.div
+            className={styles.ingredientsBackdrop}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowIngredients(false)}
+          >
+            <motion.div
+              className={styles.ingredientsSheet}
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 300, damping: 32 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.ingredientsSheetHeader}>
+                <span>材料</span>
+                <button
+                  className={styles.closeBtn}
+                  onClick={() => setShowIngredients(false)}
+                  aria-label="閉じる"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <ul className={styles.ingredientsSheetList}>
+                {ingredients?.map((item, i) => (
+                  <li key={i}>
+                    <span>{item.name}</span>
+                    <span className={styles.ingredientsSheetAmount}>{item.amount}</span>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className={styles.timelineWrap}>
         <div className={styles.timelineTrack}>

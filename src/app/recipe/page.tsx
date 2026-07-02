@@ -587,7 +587,7 @@ export default function RecipePage() {
           <CookingSession
             title={recipes[cookingRecipeIndex].title}
             steps={recipes[cookingRecipeIndex].steps}
-            ingredients={recipes[cookingRecipeIndex].ingredients.map((i) => i.name)}
+            ingredients={recipes[cookingRecipeIndex].ingredients}
             autoGenerateImages={cookingAutoImages}
             onClose={() => setCookingRecipeIndex(null)}
           />
